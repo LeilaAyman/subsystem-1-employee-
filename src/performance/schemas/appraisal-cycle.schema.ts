@@ -1,40 +1,38 @@
+// src/performance/schemas/appraisal-cycle.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
-import { PerformanceTemplate } from './performance-template.schema';
+import mongoose, { HydratedDocument } from 'mongoose';
+import { AppraisalType } from '../enums/appraisal-type.enum';
 
 export type AppraisalCycleDocument = HydratedDocument<AppraisalCycle>;
 
-export enum AppraisalCycleStatus {
-  DRAFT = 'DRAFT',
-  ACTIVE = 'ACTIVE',
-  CLOSED = 'CLOSED',
-  ARCHIVED = 'ARCHIVED',
-}
-
 @Schema({ timestamps: true })
 export class AppraisalCycle {
-  _id: Types.ObjectId;
-
-  @Prop({ required: true, unique: true })
-  code: string; // "ANNUAL_2025"
-
   @Prop({ required: true })
-  name: string;
+  name: string; // "2025 Annual Appraisal"
 
-  @Prop({ type: Types.ObjectId, ref: PerformanceTemplate.name, required: true })
-  templateId: Types.ObjectId;
+  @Prop({ type: String, enum: AppraisalType, required: true })
+  type: AppraisalType;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   startDate: Date;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   endDate: Date;
 
   @Prop({
-    enum: AppraisalCycleStatus,
-    default: AppraisalCycleStatus.DRAFT,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AppraisalTemplate',
+    required: true,
   })
-  status: AppraisalCycleStatus;
+  template: mongoose.Types.ObjectId;
+
+  @Prop({
+    default: 'DRAFT', // could also be enum if you want (same as AppraisalStatus)
+  })
+  status: string; // DRAFT, ACTIVE, CLOSED, ARCHIVED
+
+  @Prop({ type: [String], default: [] })
+  includedOrgUnits?: string[]; // departments or units
 }
 
 export const AppraisalCycleSchema =

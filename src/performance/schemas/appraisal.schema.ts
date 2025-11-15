@@ -1,69 +1,68 @@
+// src/performance/schemas/appraisal.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
-import { AppraisalCycle } from './appraisal-cycle.schema';
-import { Employee } from '../../employee-profile/schemas/employee.schema';
+import mongoose, { HydratedDocument } from 'mongoose';
+import { DisputeStatus } from '../enums/dispute-status.enum';
+import { AppraisalStatus } from '../enums/appraisal-status.enum';
 
 export type AppraisalDocument = HydratedDocument<Appraisal>;
-
-export enum AppraisalStatus {
-  DRAFT = 'DRAFT',
-  IN_PROGRESS = 'IN_PROGRESS',
-  SUBMITTED = 'SUBMITTED',
-  PUBLISHED = 'PUBLISHED',
-  CLOSED = 'CLOSED',
-}
-
-export enum DisputeStatus {
-  NONE = 'NONE',
-  REQUESTED = 'REQUESTED',
-  RESOLVED_UPHELD = 'RESOLVED_UPHELD',
-  RESOLVED_ADJUSTED = 'RESOLVED_ADJUSTED',
-}
 
 @Schema({ _id: false })
 export class CriteriaRating {
   @Prop({ required: true })
   criteriaName: string;
 
+  @Prop({ required: true })
+  score: number; // e.g. 1–5
+
   @Prop()
   comment?: string;
-
-  @Prop({ required: true })
-  score: number; // should match template ratingScale values
 }
 
 @Schema({ timestamps: true })
 export class Appraisal {
-  _id: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true,
+  })
+  employee: mongoose.Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: Employee.name, required: true })
-  employeeId: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true,
+  })
+  manager: mongoose.Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: Employee.name, required: true })
-  reviewerId: Types.ObjectId; // usually manager
-
-  @Prop({ type: Types.ObjectId, ref: AppraisalCycle.name, required: true })
-  cycleId: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AppraisalCycle',
+    required: true,
+  })
+  cycle: mongoose.Types.ObjectId;
 
   @Prop({ type: [CriteriaRating], default: [] })
   criteriaRatings: CriteriaRating[];
 
   @Prop()
-  overallRating?: number;
+  overallComment?: string;
 
   @Prop()
-  managerComment?: string;
-
-  @Prop()
-  employeeComment?: string;
+  overallScore?: number; // weighted score
 
   @Prop({
+    type: String,
     enum: AppraisalStatus,
     default: AppraisalStatus.DRAFT,
   })
-  status: AppraisalStatus;
+  status: AppraisalStatus; // drive lifecycle inside the cycle
 
+  @Prop({ default: false })
+  published: boolean; // when HR publishes to employee
+
+  // ===== Dispute flow =====
   @Prop({
+    type: String,
     enum: DisputeStatus,
     default: DisputeStatus.NONE,
   })
@@ -74,6 +73,15 @@ export class Appraisal {
 
   @Prop()
   disputeResolutionComment?: string;
+
+  @Prop({ type: Date })
+  disputeSubmittedAt?: Date;
+
+  @Prop({ type: Date })
+  disputeResolvedAt?: Date;
 }
+
+export const CriteriaRatingSchema =
+  SchemaFactory.createForClass(CriteriaRating);
 
 export const AppraisalSchema = SchemaFactory.createForClass(Appraisal);
