@@ -1,4 +1,3 @@
-// src/performance/schemas/appraisal-cycle.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { AppraisalType } from '../enums/appraisal-type.enum';

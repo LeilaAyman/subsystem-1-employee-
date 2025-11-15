@@ -1,4 +1,3 @@
-// src/performance/schemas/appraisal.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { DisputeStatus } from '../enums/dispute-status.enum';
