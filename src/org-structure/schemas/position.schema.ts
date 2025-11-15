@@ -1,43 +1,33 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
 
-export type PositionDocument = HydratedDocument<Position>;
-
-export enum PositionStatus {
-  ACTIVE = 'ACTIVE',
-  DELIMITED = 'DELIMITED', // closed but kept in history
-}
+export type JobPositionDocument = HydratedDocument<JobPosition>;
 
 @Schema({ timestamps: true })
-export class Position {
-  _id: Types.ObjectId;
-
+export class JobPosition {
   @Prop({ required: true, unique: true })
-  code: string; // e.g. "HR-MANAGER"
+  code: string; // "SE-1", "HR-GEN-2"
 
   @Prop({ required: true })
-  title: string;
+  title: string; // "Software Engineer"
 
-  @Prop({ type: Types.ObjectId, ref: 'Department', required: true })
-  departmentId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Position', default: null })
-  reportsToPositionId?: Types.ObjectId;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true })
+  department: mongoose.Types.ObjectId;
 
   @Prop()
-  payGradeCode?: string;
+  payGrade?: string; // optional
 
-  @Prop({ default: false })
-  isManagerial?: boolean;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'JobPosition' })
+  reportsToPosition?: mongoose.Types.ObjectId;
 
-  @Prop({ enum: PositionStatus, default: PositionStatus.ACTIVE })
-  status: PositionStatus;
+  @Prop({ default: true })
+  isActive: boolean;
 
-  @Prop()
-  effectiveFrom?: Date;
+  @Prop({ type: Date })
+  validFrom?: Date;
 
-  @Prop()
-  effectiveTo?: Date;
+  @Prop({ type: Date })
+  validTo?: Date; // when position is delimited
 }
 
-export const PositionSchema = SchemaFactory.createForClass(Position);
+export const JobPositionSchema = SchemaFactory.createForClass(JobPosition);
