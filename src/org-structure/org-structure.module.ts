@@ -5,11 +5,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { OrgStructureController } from './org-structure.controller';
 import { OrgStructureService } from './org-structure.service';
-import { Department, DepartmentSchema } from './schemas/department.schema';
-import { JobPosition, JobPositionSchema } from './schemas/position.schema';
+import { Department, DepartmentSchema } from './models/department.schema';
+import { JobPosition, JobPositionSchema } from './models/position.schema';
 import { EmployeeProfileModule } from 'src/employee-profile/employee-profile.module';
 
-import { PayrollModule } from 'src/payroll/payroll.module';
+import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-configuration.module';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -17,7 +18,7 @@ import { PayrollModule } from 'src/payroll/payroll.module';
       { name: JobPosition.name, schema: JobPositionSchema },
     ]),
     forwardRef(() => EmployeeProfileModule),
-    forwardRef(() => PayrollModule),
+    forwardRef(() => PayrollConfigurationModule),
   ],
   controllers: [OrgStructureController],
   providers: [OrgStructureService],

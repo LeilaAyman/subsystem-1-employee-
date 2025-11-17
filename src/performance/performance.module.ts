@@ -9,11 +9,11 @@ import { EmployeeProfileModule } from '../employee-profile/employee-profile.modu
 import { OrgStructureModule } from '../org-structure/org-structure.module';
 
 // ===== Schemas =====
-import {PerformanceTemplate,PerformanceTemplateSchema,} from './schemas/performance-template.schema';
+import {PerformanceTemplate,PerformanceTemplateSchema,} from './models/performance-template.schema';
 
-import {Appraisal,AppraisalSchema,} from './schemas/appraisal.schema';
+import {Appraisal,AppraisalSchema,} from './models/appraisal.schema';
 
-import { AppraisalCycle,AppraisalCycleSchema,} from './schemas/appraisal-cycle.schema';
+import { AppraisalCycle,AppraisalCycleSchema,} from './models/appraisal-cycle.schema';
 
 @Module({
   imports: [

@@ -7,20 +7,20 @@ import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
 
 // Schemas
-import { Employee, EmployeeSchema } from './schemas/employee.schema';
+import { Employee, EmployeeSchema } from './models/employee.schema';
 import {
   EmployeeDocumentFile,
   EmployeeDocumentSchema,
-} from './schemas/employee-document.schema';
+} from './models/employee-document.schema';
 import {
   EmployeeChangeRequest,
   EmployeeChangeRequestSchema,
-} from './schemas/employee-change-request.schema';
+} from './models/employee-change-request.schema';
 
 // Imported Modules ( Integrations)
 import { OrgStructureModule } from 'src/org-structure/org-structure.module';
 import { PerformanceModule } from 'src/performance/performance.module';
-import { PayrollModule } from 'src/payroll/payroll.module'; // used for status/pay grade updates
+import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-configuration.module';
 
 @Module({
   imports: [
@@ -33,7 +33,7 @@ import { PayrollModule } from 'src/payroll/payroll.module'; // used for status/p
     // Cross–module integrations (Milestone 2)
     forwardRef(() => OrgStructureModule),
     forwardRef(() => PerformanceModule),
-    forwardRef(() => PayrollModule), // optional but needed when Status/Pay Grade updates affect payroll
+    forwardRef(() => PayrollConfigurationModule), // optional but needed when Status/Pay Grade updates affect payroll
   ],
 
   controllers: [EmployeeProfileController],
