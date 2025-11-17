@@ -5,7 +5,7 @@ import mongoose, {HydratedDocument} from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Overtime {
-  @Prop({required: true, type: [mongoose.Schema.Types.ObjectId]})
+  @Prop({required: true, type: [mongoose.Schema.Types.ObjectId], ref: 'Employee' })
        employeeId: mongoose.Schema.Types.ObjectId;
 
   @Prop({ required: true })
