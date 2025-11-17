@@ -1,26 +1,19 @@
 // src/performance/performance.module.ts
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { PerformanceController } from './performance.controller';
 import { PerformanceService } from './performance.service';
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+import { OrgStructureModule } from '../org-structure/org-structure.module';
 
 // ===== Schemas =====
-import {
-  PerformanceTemplate,
-  PerformanceTemplateSchema,
-} from './schemas/performance-template.schema';
+import {PerformanceTemplate,PerformanceTemplateSchema,} from './schemas/performance-template.schema';
 
-import {
-  Appraisal,
-  AppraisalSchema,
-} from './schemas/appraisal.schema';
+import {Appraisal,AppraisalSchema,} from './schemas/appraisal.schema';
 
-import {
-  AppraisalCycle,
-  AppraisalCycleSchema,
-} from './schemas/appraisal-cycle.schema';
+import { AppraisalCycle,AppraisalCycleSchema,} from './schemas/appraisal-cycle.schema';
 
 @Module({
   imports: [
@@ -29,9 +22,11 @@ import {
       { name: Appraisal.name, schema: AppraisalSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
     ]),
+    forwardRef(() => EmployeeProfileModule),
+    forwardRef(() => OrgStructureModule),
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
-  exports: [PerformanceService], // so other modules can use performance data
+  exports: [PerformanceService],
 })
 export class PerformanceModule {}

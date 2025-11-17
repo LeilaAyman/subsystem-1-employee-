@@ -18,11 +18,11 @@ export class JobPosition {
   })
   department: mongoose.Types.ObjectId;
 
-  // 🔹 BR 10: Position must have Pay Grade
+  // 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'PayGrade',
-    required: true, // if you want to enforce BR 10 strictly
+    required: true, 
   })
   payGrade: mongoose.Types.ObjectId;
 
