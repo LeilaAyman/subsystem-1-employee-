@@ -12,6 +12,7 @@ import { EscalationModule } from './escalation/escalation.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { CorrectionRequestModule } from './correction-request/correction-request.module';
 import { NotificationModule } from './notification/notification.module';
+import { TimeManagementModule } from './time-management/time-management.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NotificationModule } from './notification/notification.module';
     CorrectionRequestModule,
     NotificationModule,
     LeavesModule,
+    TimeManagementModule,
   ],
 })
 export class AppModule {}
