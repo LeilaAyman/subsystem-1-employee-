@@ -7,11 +7,47 @@ import { EmploymentStatus } from '../enums/employment-status.enum';
 
 export type EmployeeDocument = HydratedDocument<Employee>;
 
-@Schema()
+// ======================================
+// 📌 ENUMS
+// ======================================
+export enum ContractType {
+  PERMANENT = 'PERMANENT',
+  FIXED_TERM = 'FIXED_TERM',
+  PROBATION = 'PROBATION',
+  INTERN = 'INTERN',
+}
+
+// ======================================
+// 📌 EMBEDDED SUBDOCUMENTS
+// ======================================
+@Schema({ _id: false })
+export class EducationEntry {
+  @Prop()
+  degree?: string;          // e.g. BSc Computer Science
+
+  @Prop()
+  institution?: string;     // e.g. German International University
+
+  @Prop()
+  fieldOfStudy?: string;
+
+  @Prop({ type: Date })
+  startDate?: Date;
+
+  @Prop({ type: Date })
+  endDate?: Date;
+}
+
+@Schema({ timestamps: true })
 export class Employee {
-  // ========= AUTH / ACCOUNT =========
+  // ======================================
+  // 📌 AUTH / ACCOUNT INFORMATION
+  // ======================================
   @Prop({ required: true, unique: true })
-  workEmail: string; // main company email (can also be used for login)
+  workEmail: string;        // official company email (login)
+
+  @Prop({ required: true })
+  password: string;         // hashed
 
   @Prop({
     required: true,
@@ -20,10 +56,9 @@ export class Employee {
   })
   role: Role;
 
-  @Prop({ required: true })
-  password: string; // store hashed password
-
-  // ========= PERSONAL INFO (governed) =========
+  // ======================================
+  // 📌 PERSONAL INFORMATION (HR-GOVERNED)
+  // ======================================
   @Prop({ required: true })
   firstName: string;
 
@@ -40,9 +75,18 @@ export class Employee {
   dateOfBirth?: Date;
 
   @Prop()
-  gender?: string; 
+  gender?: string; // or enum
 
-  // ========= CONTACT INFO (self-service) =========
+  @Prop()
+  nationality?: string;
+
+  @Prop()
+  maritalStatus?: string; // or enum if you prefer
+
+  // ======================================
+  // 📌 CONTACT INFORMATION (SELF-SERVICE)
+  // (BR 2g, 2n, 2o – system can store Phone, Email, Address)
+  // ======================================
   @Prop()
   personalEmail?: string;
 
@@ -58,21 +102,33 @@ export class Employee {
   @Prop()
   emergencyContactPhone?: string;
 
-  // ========= JOB / ORG INFO (HR-governed) =========
+  // ======================================
+  // 📌 ORGANIZATIONAL STRUCTURE LINKING
+  // (Actual Departments & Positions, NOT strings)
+  // ======================================
   @Prop({ unique: true, sparse: true })
-  employeeNo?: string; // e.g. "EMP-000123"
+  employeeNo?: string; // e.g., EMP-0001
 
-  @Prop()
-  department?: string; 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Department' })
+  department?: mongoose.Types.ObjectId;
 
-  @Prop()
-  jobTitle?: string; // "Software Engineer", "HR Generalist", etc.
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Position' })
+  position?: mongoose.Types.ObjectId;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' })
   manager?: mongoose.Types.ObjectId; // reporting line
 
+  // ======================================
+  // 📌 EMPLOYMENT & CONTRACT DETAILS
+  // ======================================
   @Prop({ type: Date })
   hireDate?: Date;
+
+  @Prop({ type: Date })
+  contractStartDate?: Date;
+
+  @Prop({ type: Date })
+  contractEndDate?: Date; // for fixed-term or probation
 
   @Prop({
     type: String,
@@ -81,7 +137,33 @@ export class Employee {
   })
   employmentStatus: EmploymentStatus;
 
-  // ========= LIFECYCLE / OFFBOARDING =========
+  @Prop({
+    type: String,
+    enum: ContractType,
+  })
+  contractType?: ContractType;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'PayGrade' })
+  payGrade?: mongoose.Types.ObjectId;
+
+  // ======================================
+  // 📌 EDUCATION & BACKGROUND (BR 3h)
+  // ======================================
+  @Prop({ type: [EducationEntry], default: [] })
+  education?: EducationEntry[];
+
+  // ======================================
+  // 📌 PERFORMANCE HISTORY (DOWNSTREAM INPUT)
+  // ======================================
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Appraisal' }],
+    default: [],
+  })
+  appraisalHistory: mongoose.Types.ObjectId[];
+
+  // ======================================
+  // 📌 OFFBOARDING INFORMATION
+  // ======================================
   @Prop({ type: Date })
   terminationDate?: Date;
 
@@ -91,15 +173,25 @@ export class Employee {
   @Prop({ default: true })
   isActive: boolean;
 
-  // ========= OTHER =========
+  // ======================================
+  // 📌 MEDIA & MISC
+  // ======================================
   @Prop()
   profilePhotoUrl?: string;
 
-  @Prop({ type: Date, default: Date.now })
-  createdAt: Date;
-
-  @Prop({ type: Date, default: Date.now })
-  updatedAt: Date;
+  @Prop()
+  bio?: string; // short biography (US-E2-12)
 }
 
 export const EmployeeSchema = SchemaFactory.createForClass(Employee);
+
+// ======================================
+// 📌 INDEXES (for search & manager/team views)
+// ======================================
+EmployeeSchema.index({ workEmail: 1 }, { unique: true });
+EmployeeSchema.index({ employeeNo: 1 }, { unique: true, sparse: true });
+EmployeeSchema.index({ firstName: 1, lastName: 1 });
+EmployeeSchema.index({ department: 1 });
+EmployeeSchema.index({ position: 1 });
+EmployeeSchema.index({ employmentStatus: 1 });
+EmployeeSchema.index({ manager: 1 });

@@ -11,13 +11,25 @@ export class JobPosition {
   @Prop({ required: true })
   title: string; // "Software Engineer"
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    required: true,
+  })
   department: mongoose.Types.ObjectId;
 
-  @Prop()
-  payGrade?: string; // optional
+  // 🔹 BR 10: Position must have Pay Grade
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PayGrade',
+    required: true, // if you want to enforce BR 10 strictly
+  })
+  payGrade: mongoose.Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'JobPosition' })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'JobPosition',
+  })
   reportsToPosition?: mongoose.Types.ObjectId;
 
   @Prop({ default: true })
