@@ -1,34 +1,31 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LeavesModule } from './leaves/leaves.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ShiftAssignmentModule } from './shift-assignment/shift-assignment.module';
-import { ShiftModule } from './shift/shift.module';
-import { AttendanceModule } from './attendance/attendance.module';
-import { FalsePenaltyModule } from './false-penalty/false-penalty.module';
-import { OvertimeModule } from './overtime/overtime.module';
-import { EscalationModule } from './escalation/escalation.module';
-import { SchedulingModule } from './scheduling/scheduling.module';
-import { CorrectionRequestModule } from './correction-request/correction-request.module';
-import { NotificationModule } from './notification/notification.module';
 import { TimeManagementModule } from './time-management/time-management.module';
+import { EmployeeProfileModule } from './employee-profile/employee-profile.module';
+import { OrgStructureModule } from './org-structure/org-structure.module';
+import { PayrollConfigurationModule } from './payroll-configuration/payroll-configuration.module';
+import { PayrollProcessingModule } from './payroll-processing/payroll-processing.module';
+import { PayrollTrackingModule } from './payroll-tracking/payroll-tracking.module';
+import { PerformanceModule } from './performance/performance.module';
+import { RecruitmentModule } from './recruitment/src/recruitment/recruitment.module';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.DB_URL!),
-    ShiftAssignmentModule,
-    ShiftModule,
-    AttendanceModule,
-    FalsePenaltyModule, 
-    OvertimeModule,
-    EscalationModule,
-    SchedulingModule,
-    CorrectionRequestModule,
-    NotificationModule,
     LeavesModule,
     TimeManagementModule,
+    EmployeeProfileModule,
+    OrgStructureModule,
+    PayrollConfigurationModule,
+    PayrollProcessingModule,
+    PayrollTrackingModule,
+    PerformanceModule,
+    RecruitmentModule,
+
   ],
 })
 export class AppModule {}
