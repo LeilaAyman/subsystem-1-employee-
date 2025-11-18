@@ -5,15 +5,27 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { PerformanceController } from './performance.controller';
 import { PerformanceService } from './performance.service';
+
+// ===== Other Sub-Systems (dependencies) =====
 import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
 import { OrgStructureModule } from '../org-structure/org-structure.module';
+import { TimeManagementModule } from '../time-management/time-management.module';
 
 // ===== Schemas =====
-import {PerformanceTemplate,PerformanceTemplateSchema,} from './models/performance-template.schema';
+import {
+  PerformanceTemplate,
+  PerformanceTemplateSchema,
+} from './models/performance-template.schema';
 
-import {Appraisal,AppraisalSchema,} from './models/appraisal.schema';
+import {
+  Appraisal,
+  AppraisalSchema,
+} from './models/appraisal.schema';
 
-import { AppraisalCycle,AppraisalCycleSchema,} from './models/appraisal-cycle.schema';
+import {
+  AppraisalCycle,
+  AppraisalCycleSchema,
+} from './models/appraisal-cycle.schema';
 
 @Module({
   imports: [
@@ -22,8 +34,12 @@ import { AppraisalCycle,AppraisalCycleSchema,} from './models/appraisal-cycle.sc
       { name: Appraisal.name, schema: AppraisalSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
     ]),
-    forwardRef(() => EmployeeProfileModule),
-    forwardRef(() => OrgStructureModule),
+
+    // ===== Cross-module dependencies =====
+    forwardRef(() => EmployeeProfileModule), // EP: employee list, profile data
+    forwardRef(() => OrgStructureModule),    // OS: reporting lines, departments
+    forwardRef(() => TimeManagementModule),  // TM: attendance & punctuality for ratings
+        // Notifications: reminders, cycle alerts, dispute alerts
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
