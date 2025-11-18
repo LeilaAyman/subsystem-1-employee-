@@ -18,15 +18,15 @@ export enum ContractType {
 }
 
 // ======================================
-// 📌 EMBEDDED SUBDOCUMENTS
+// 📌 EMBEDDED SUBDOCUMENTS (BR 3h – Education details)
 // ======================================
 @Schema({ _id: false })
 export class EducationEntry {
   @Prop()
-  degree?: string;          // e.g. BSc Computer Science
+  degree?: string;
 
   @Prop()
-  institution?: string;     // e.g. German International University
+  institution?: string;
 
   @Prop()
   fieldOfStudy?: string;
@@ -42,12 +42,13 @@ export class EducationEntry {
 export class Employee {
   // ======================================
   // 📌 AUTH / ACCOUNT INFORMATION
+  // (NFR-14, US-E7-05 – roles & secure login)
   // ======================================
   @Prop({ required: true, unique: true })
-  workEmail: string;        // official company email (login)
+  workEmail: string;
 
   @Prop({ required: true })
-  password: string;         // hashed
+  password: string;
 
   @Prop({
     required: true,
@@ -59,6 +60,7 @@ export class Employee {
 
   // ======================================
   // 📌 PERSONAL INFORMATION (HR-GOVERNED)
+  // (BR 2a-r – core personal data; Onboarding input)
   // ======================================
   @Prop({ required: true })
   firstName: string;
@@ -67,26 +69,17 @@ export class Employee {
   lastName: string;
 
   @Prop()
-  middleName?: string;
-
-  @Prop()
   nationalId?: string;
 
   @Prop({ type: Date })
   dateOfBirth?: Date;
 
   @Prop()
-  gender?: string; // or enum
-
-  @Prop()
-  nationality?: string;
-
-  @Prop()
-  maritalStatus?: string; // or enum if you prefer
+  maritalStatus?: string; // mentioned explicitly in change-request action (Action 3)
 
   // ======================================
   // 📌 CONTACT INFORMATION (SELF-SERVICE)
-  // (BR 2g, 2n, 2o – system can store Phone, Email, Address)
+  // (US-E2-05, BR 2g, 2n, 2o – address, phone, email)
   // ======================================
   @Prop()
   personalEmail?: string;
@@ -97,15 +90,9 @@ export class Employee {
   @Prop()
   address?: string;
 
-  @Prop()
-  emergencyContactName?: string;
-
-  @Prop()
-  emergencyContactPhone?: string;
-
   // ======================================
   // 📌 ORGANIZATIONAL STRUCTURE LINKING
-  // (Actual Departments & Positions, NOT strings)
+  // (Org Structure dependency + manager view US-E4-01/02)
   // ======================================
   @Prop({ unique: true, sparse: true })
   employeeNo?: string; // e.g., EMP-0001
@@ -121,22 +108,17 @@ export class Employee {
 
   // ======================================
   // 📌 EMPLOYMENT & CONTRACT DETAILS
+  // (Onboarding + BR 3b, 3f, 3g, 3j + Payroll dependency)
   // ======================================
   @Prop({ type: Date })
-  hireDate?: Date;
-
-  @Prop({ type: Date })
-  contractStartDate?: Date;
-
-  @Prop({ type: Date })
-  contractEndDate?: Date; // for fixed-term or probation
+  hireDate?: Date; // Date of Hire
 
   @Prop({
     type: String,
     enum: EmploymentStatus,
     default: EmploymentStatus.ACTIVE,
   })
-  employmentStatus: EmploymentStatus;
+  employmentStatus: EmploymentStatus; // Active / On Leave / Suspended / Retired (BR 3j)
 
   @Prop({
     type: String,
@@ -145,7 +127,7 @@ export class Employee {
   contractType?: ContractType;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'PayGrade' })
-  payGrade?: mongoose.Types.ObjectId;
+  payGrade?: mongoose.Types.ObjectId; // Payroll & Benefits dependency
 
   // ======================================
   // 📌 EDUCATION & BACKGROUND (BR 3h)
@@ -155,6 +137,7 @@ export class Employee {
 
   // ======================================
   // 📌 PERFORMANCE HISTORY (DOWNSTREAM INPUT)
+  // (BR 16 – Appraisal records saved on profile)
   // ======================================
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Appraisal' }],
@@ -164,6 +147,7 @@ export class Employee {
 
   // ======================================
   // 📌 OFFBOARDING INFORMATION
+  // (Leaves/Offboarding → status & dates)
   // ======================================
   @Prop({ type: Date })
   terminationDate?: Date;
@@ -171,22 +155,20 @@ export class Employee {
   @Prop({ type: Date })
   resignationDate?: Date;
 
-  @Prop({ default: true })
-  isActive: boolean;
-
   // ======================================
-  // 📌 MEDIA & MISC
+  // 📌 MEDIA & SELF-SERVICE PROFILE CONTENT
+  // (US-E2-12 – profile picture & short biography)
   // ======================================
   @Prop()
   profilePhotoUrl?: string;
 
   @Prop()
-  bio?: string; // short biography (US-E2-12)
+  bio?: string;
 }
 
 export const EmployeeSchema = SchemaFactory.createForClass(Employee);
 
 // ======================================
-// 📌 INDEXES (for search & manager/team views)
+// 📌 INDEXES (US-E6-03 – search employees data, NFR – performance)
 // ======================================
 
