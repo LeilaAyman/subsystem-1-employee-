@@ -14,6 +14,10 @@ import { Shift, ShiftSchema } from './models/shift.model';
 
 // imports i added for integration
 import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.schema';
+import { EmployeeProfileModule } from 'src/employee-profile/employee-profile.module';
+import { OrgStructureModule } from 'src/org-structure/org-structure.module';
+import { LeavesModule } from 'src/leaves/leaves.module';
+import { PayrollTrackingModule } from 'src/payroll-tracking/payroll-tracking.module';
 
 @Module({
   imports: [ MongooseModule.forFeature([
@@ -26,10 +30,13 @@ import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.s
       { name: Scheduling.name, schema: SchedulingSchema },
       { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
       { name: Shift.name, schema: ShiftSchema },
-      
-      // schema i added for integration
-      { name: Employee.name, schema: EmployeeSchema },
-    ]),],
+    
+    ]),
+    EmployeeProfileModule, 
+    OrgStructureModule,
+    LeavesModule,
+    PayrollTrackingModule
+  ],
   controllers: [TimeManagementController],
   providers: [TimeManagementService],
 })
