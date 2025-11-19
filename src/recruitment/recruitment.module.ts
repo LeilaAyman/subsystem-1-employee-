@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RecruitmentService } from './recruitment.service';
 import { RecruitmentController } from './recruitment.controller';
 
-import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.schema';
+import { Employee, EmployeeSchema } from '../employee-profile/models/employee.schema';
 import { Notification, NotificationSchema } from '../time-management/models/notification.model';
 import { JobPosition, JobPositionSchema } from '../org-structure/schemas/position.schema';
 import { Scheduling, SchedulingSchema } from '../time-management/models/scheduling.model';

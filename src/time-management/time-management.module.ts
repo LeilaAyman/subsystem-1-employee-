@@ -13,7 +13,7 @@ import { ShiftAssignment, ShiftAssignmentSchema } from './models/shift-assignmen
 import { Shift, ShiftSchema } from './models/shift.model';
 
 // imports i added for integration
-import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.schema';
+import { Employee, EmployeeSchema } from '../employee-profile/models/employee.schema';
 import { EmployeeProfileModule } from 'src/employee-profile/employee-profile.module';
 import { OrgStructureModule } from 'src/org-structure/org-structure.module';
 import { LeavesModule } from 'src/leaves/leaves.module';

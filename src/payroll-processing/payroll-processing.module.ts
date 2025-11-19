@@ -10,7 +10,7 @@ import { PayrollFinal, PayrollFinalSchema } from './schemas/payroll-final.schema
 import { Payslip, PayslipSchema } from './schemas/payslip.schema';
 import { PayrollProcessingService } from './payroll-processing.service';
 
-import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.schema';
+import { Employee, EmployeeSchema } from '../employee-profile/models/employee.schema';
 import { Bonus, BonusSchema } from '../payroll-configuration/schemas/Bonus.schema';
 import { Compensation, CompensationSchema } from '../payroll-configuration/schemas/Compensation.schema';
 import { TaxRule , TaxRuleSchema} from '../payroll-configuration/schemas/TaxRule.schema';

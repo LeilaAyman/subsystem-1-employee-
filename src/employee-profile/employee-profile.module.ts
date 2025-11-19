@@ -7,15 +7,15 @@ import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
 
 // Schemas
-import { Employee, EmployeeSchema } from './schemas/employee.schema';
+import { Employee, EmployeeSchema } from './models/employee.schema';
 import {
   EmployeeDocumentFile,
   EmployeeDocumentSchema,
-} from './schemas/employee-document.schema';
+} from './models/employee-document.schema';
 import {
   EmployeeChangeRequest,
   EmployeeChangeRequestSchema,
-} from './schemas/employee-change-request.schema';
+} from './models/employee-change-request.schema';
 
 // Imported Modules ( Integrations)
 import { OrgStructureModule } from 'src/org-structure/org-structure.module';
