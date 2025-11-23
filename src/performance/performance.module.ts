@@ -1,29 +1,37 @@
-// src/performance/performance.module.ts
-
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { PerformanceController } from './performance.controller';
 import { PerformanceService } from './performance.service';
-import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
-import { OrgStructureModule } from '../org-structure/org-structure.module';
-
-// ===== Schemas =====
-import {PerformanceTemplate,PerformanceTemplateSchema,} from './models/performance-template.schema';
-
-import {Appraisal,AppraisalSchema,} from './models/appraisal.schema';
-
-import { AppraisalCycle,AppraisalCycleSchema,} from './models/appraisal-cycle.schema';
+import {
+  AppraisalTemplate,
+  AppraisalTemplateSchema,
+} from './models/appraisal-template.schema';
+import {
+  AppraisalCycle,
+  AppraisalCycleSchema,
+} from './models/appraisal-cycle.schema';
+import {
+  AppraisalAssignment,
+  AppraisalAssignmentSchema,
+} from './models/appraisal-assignment.schema';
+import {
+  AppraisalRecord,
+  AppraisalRecordSchema,
+} from './models/appraisal-record.schema';
+import {
+  AppraisalDispute,
+  AppraisalDisputeSchema,
+} from './models/appraisal-dispute.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: PerformanceTemplate.name, schema: PerformanceTemplateSchema },
-      { name: Appraisal.name, schema: AppraisalSchema },
+      { name: AppraisalTemplate.name, schema: AppraisalTemplateSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
+      { name: AppraisalAssignment.name, schema: AppraisalAssignmentSchema },
+      { name: AppraisalRecord.name, schema: AppraisalRecordSchema },
+      { name: AppraisalDispute.name, schema: AppraisalDisputeSchema },
     ]),
-    forwardRef(() => EmployeeProfileModule),
-    forwardRef(() => OrgStructureModule),
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
