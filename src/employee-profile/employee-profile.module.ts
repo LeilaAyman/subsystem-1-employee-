@@ -1,44 +1,39 @@
-// src/employee-profile/employee-profile.module.ts
-
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
-
-// Schemas
-import { Employee, EmployeeSchema } from './models/employee.schema';
+import { Candidate, CandidateSchema } from './models/candidate.schema';
 import {
-  EmployeeDocumentFile,
-  EmployeeDocumentSchema,
-} from './models/employee-document.schema';
+  EmployeeProfile,
+  EmployeeProfileSchema,
+} from './models/employee-profile.schema';
 import {
-  EmployeeChangeRequest,
-  EmployeeChangeRequestSchema,
-} from './models/employee-change-request.schema';
+  EmployeeSystemRole,
+  EmployeeSystemRoleSchema,
+} from './models/employee-system-role.schema';
+import {
+  EmployeeProfileChangeRequest,
+  EmployeeProfileChangeRequestSchema,
+} from './models/ep-change-request.schema';
+import {
+  EmployeeQualification,
+  EmployeeQualificationSchema,
+} from './models/qualification.schema';
 
-// Imported Modules ( Integrations)
-import { OrgStructureModule } from 'src/org-structure/org-structure.module';
-import { PerformanceModule } from 'src/performance/performance.module';
-import {RecruitmentModule }from 'src/recruitment/recruitment.module';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Employee.name, schema: EmployeeSchema },
-      { name: EmployeeDocumentFile.name, schema: EmployeeDocumentSchema },
-      { name: EmployeeChangeRequest.name, schema: EmployeeChangeRequestSchema },
+      { name: Candidate.name, schema: CandidateSchema },
+      { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
+      { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
+      {
+        name: EmployeeProfileChangeRequest.name,
+        schema: EmployeeProfileChangeRequestSchema,
+      },
+      { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
-    forwardRef(()=>OrgStructureModule),
-    forwardRef(()=>PerformanceModule),
-    RecruitmentModule
-
-  
-    
   ],
-
   controllers: [EmployeeProfileController],
   providers: [EmployeeProfileService],
-
-  exports: [EmployeeProfileService],
 })
 export class EmployeeProfileModule {}

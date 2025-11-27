@@ -1,45 +1,37 @@
-// src/performance/performance.module.ts
-
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { PerformanceController } from './performance.controller';
 import { PerformanceService } from './performance.service';
-
-// ===== Other Sub-Systems (dependencies) =====
-import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
-import { OrgStructureModule } from '../org-structure/org-structure.module';
-import { TimeManagementModule } from '../time-management/time-management.module';
-
-// ===== Schemas =====
 import {
-  PerformanceTemplate,
-  PerformanceTemplateSchema,
-} from './schemas/performance-template.schema';
-
-import {
-  Appraisal,
-  AppraisalSchema,
-} from './schemas/appraisal.schema';
-
+  AppraisalTemplate,
+  AppraisalTemplateSchema,
+} from './models/appraisal-template.schema';
 import {
   AppraisalCycle,
   AppraisalCycleSchema,
-} from './schemas/appraisal-cycle.schema';
+} from './models/appraisal-cycle.schema';
+import {
+  AppraisalAssignment,
+  AppraisalAssignmentSchema,
+} from './models/appraisal-assignment.schema';
+import {
+  AppraisalRecord,
+  AppraisalRecordSchema,
+} from './models/appraisal-record.schema';
+import {
+  AppraisalDispute,
+  AppraisalDisputeSchema,
+} from './models/appraisal-dispute.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: PerformanceTemplate.name, schema: PerformanceTemplateSchema },
-      { name: Appraisal.name, schema: AppraisalSchema },
+      { name: AppraisalTemplate.name, schema: AppraisalTemplateSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
+      { name: AppraisalAssignment.name, schema: AppraisalAssignmentSchema },
+      { name: AppraisalRecord.name, schema: AppraisalRecordSchema },
+      { name: AppraisalDispute.name, schema: AppraisalDisputeSchema },
     ]),
-    forwardRef(()=>EmployeeProfileModule), 
-    OrgStructureModule, 
-    forwardRef(()=>TimeManagementModule)
-
-    // ===== Cross-module dependencies =====
-    // TM: attendance & punctuality for ratings
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
