@@ -26,6 +26,7 @@ import {
   SystemRole,
   EmployeeStatus,
 } from './enums/employee-profile.enums';
+import { PerformanceService } from '../performance/performance.service';
 
 @Injectable()
 export class EmployeeProfileService {
@@ -44,6 +45,7 @@ export class EmployeeProfileService {
     private employeeProfileModel: Model<EmployeeProfileDocument>,
     @InjectModel(EmployeeProfileChangeRequest.name)
     private changeRequestModel: Model<EmployeeProfileChangeRequest>,
+    private performanceService: PerformanceService,
   ) {
     // Ensure upload directory exists
     if (!fs.existsSync(this.uploadPath)) {
@@ -84,8 +86,9 @@ export class EmployeeProfileService {
 
   /**
    * US-E2-04: View full employee profile
+   * Retrieves employee profile with appraisal history from Performance module
    */
-  async getMyProfile(employeeId: string): Promise<EmployeeProfile> {
+  async getMyProfile(employeeId: string): Promise<any> {
     const profile = await this.employeeProfileModel
       .findById(employeeId)
       .populate('primaryPositionId')
@@ -98,7 +101,13 @@ export class EmployeeProfileService {
       throw new NotFoundException('Employee profile not found');
     }
 
-    return profile;
+    // Retrieve appraisal history from Performance module
+    const appraisalHistory = await this.performanceService.getEmployeeAppraisalHistory(employeeId);
+
+    return {
+      ...profile.toObject(),
+      appraisalHistory,
+    };
   }
 
   /**

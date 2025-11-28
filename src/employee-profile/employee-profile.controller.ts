@@ -24,11 +24,11 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { EmployeeProfileService } from './employee-profile.service';
-import { AuthGuard } from '../common/guards/auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import type { CurrentUserData } from '../common/decorators/current-user.decorator';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserData } from '../auth/decorators/current-user.decorator';
 import { SystemRole, EmployeeStatus } from './enums/employee-profile.enums';
 import { UpdateContactInfoDto } from './dto/update-contact-info.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -48,13 +48,16 @@ export class EmployeeProfileController {
   // ==================== EMPLOYEE SELF-SERVICE ENDPOINTS ====================
 
   @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiTags('Employee Self-Service')
   @ApiOperation({
     summary: 'View my employee profile',
     description:
-      'US-E2-04: Employee views their full profile including personal info, employment details, and appraisal history',
+      'US-E2-04: Employee views their full profile including personal info, employment details, and appraisal history - Secured with JWT',
   })
   @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
   @ApiResponse({ status: 404, description: 'Profile not found' })
   async getMyProfile(@CurrentUser() user: CurrentUserData) {
     return this.employeeProfileService.getMyProfile(user.employeeId);

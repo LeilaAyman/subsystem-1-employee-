@@ -19,6 +19,7 @@ import {
   EmployeeQualification,
   EmployeeQualificationSchema,
 } from './models/qualification.schema';
+import { PerformanceModule } from '../performance/performance.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import {
       },
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
+    PerformanceModule,
   ],
   controllers: [EmployeeProfileController],
   providers: [EmployeeProfileService],
