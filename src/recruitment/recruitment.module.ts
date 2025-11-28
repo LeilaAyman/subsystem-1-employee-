@@ -15,8 +15,11 @@ import { Document,DocumentSchema } from './models/document.schema';
 import { TerminationRequest,TerminationRequestSchema } from './models/termination-request.schema';
 import { ClearanceChecklist,ClearanceChecklistSchema } from './models/clearance-checklist.schema';
 import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+import { Notification, NotificationSchema } from './models/notification.schema'; 
+
 @Module({
   imports:[MongooseModule.forFeature([
+      { name: Notification.name, schema: NotificationSchema },
       { name: JobTemplate.name, schema: JobTemplateSchema },
       { name: JobRequisition.name, schema: JobRequisitionSchema },
       { name: Application.name, schema: ApplicationSchema },
