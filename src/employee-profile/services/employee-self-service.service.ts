@@ -30,7 +30,7 @@ export class EmployeeSelfServiceService {
     }
 
     // Retrieve appraisal history from Performance module
-    const appraisalHistory = await this.performanceService.getEmployeeAppraisalHistory(employeeId);
+    const appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
 
     return {
       ...profile.toObject(),

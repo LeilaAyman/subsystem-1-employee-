@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
@@ -40,7 +40,7 @@ import { TimeManagementModule } from '../time-management/time-management.module'
       },
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
-    PerformanceModule,
+    forwardRef(() => PerformanceModule),
     TimeManagementModule,
   ],
   controllers: [EmployeeProfileController],
