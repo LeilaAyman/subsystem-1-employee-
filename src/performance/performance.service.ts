@@ -1,24 +1,625 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AppraisalRecord } from './models/appraisal-record.schema';
+import { AppraisalTemplate,   AppraisalTemplateDocument } from './models/appraisal-template.schema';
+import { AppraisalCycle,   AppraisalCycleDocument } from './models/appraisal-cycle.schema';
+import { AppraisalAssignment,   AppraisalAssignmentDocument } from './models/appraisal-assignment.schema';
+import { AppraisalRecord,   AppraisalRecordDocument } from './models/appraisal-record.schema';
+import { AppraisalDispute, AppraisalDisputeDocument } from './models/appraisal-dispute.schema';
+import { EmployeeProfile } from '../employee-profile/models/employee-profile.schema';
+import { Department } from '../organization-structure/models/department.schema';
+import { AppraisalCycleStatus,  AppraisalAssignmentStatus, 
+    AppraisalRecordStatus, AppraisalDisputeStatus,} from '../performance/enums/performance.enums';
 
 @Injectable()
 export class PerformanceService {
-  constructor(
-    @InjectModel(AppraisalRecord.name)
-    private appraisalRecordModel: Model<AppraisalRecord>,
-  ) {}
+    constructor(
+        @InjectModel(AppraisalTemplate.name) 
+        private appraisalTemplateModel: Model<AppraisalTemplateDocument>,
+        @InjectModel(AppraisalCycle.name)
+        private appraisalCycleModel: Model<AppraisalCycleDocument>,
+        @InjectModel(AppraisalAssignment.name) 
+        private appraisalAssignmentModel: Model<AppraisalAssignmentDocument>,
+        @InjectModel(AppraisalRecord.name) 
+        private appraisalRecordModel: Model<AppraisalRecordDocument>,
+        @InjectModel(AppraisalDispute.name) 
+        private appraisalDisputeModel: Model<AppraisalDisputeDocument>,
+        @InjectModel(Department.name) 
+        private departmentModel: Model<Department>,
+    ) {}
 
-  /**
-   * Get appraisal history for an employee
-   */
-  async getEmployeeAppraisalHistory(employeeId: string | Types.ObjectId) {
-    return this.appraisalRecordModel
-      .find({ employeeId })
-      .populate('cycleId')
-      .populate('templateId')
-      .sort({ createdAt: -1 })
+    private toObjectId(value: any) {
+        if (!value) return undefined;
+        if (value instanceof Types.ObjectId) return value;
+        try {
+            return new Types.ObjectId(value);
+        } catch {
+            return undefined;
+        }
+    }
+
+    async createDispute(dto: any){
+        // 1. Convert all IDs coming from request
+        const appraisalId = this.toObjectId(dto.appraisalId);
+        const assignmentId = this.toObjectId(dto.assignmentId);
+        const cycleId = this.toObjectId(dto.cycleId);
+        const employeeId = this.toObjectId(dto.raisedByEmployeeId);
+
+        // 2. FIX the bad cycle document BEFORE ANYTHING FAILS
+        await this.appraisalCycleModel.updateOne(
+            { _id: cycleId },
+            {
+            $set: {
+                "templateAssignments.0.templateId": this.toObjectId(dto.templateId),
+                "templateAssignments.0.departmentIds.0": this.toObjectId(
+                dto.departmentId
+                )
+            }
+            }
+        );
+
+        // 3. Create the dispute safely
+        const dispute = new this.appraisalDisputeModel({
+            appraisalId,
+            assignmentId,
+            cycleId,
+            raisedByEmployeeId: employeeId,
+            reason: dto.reason,
+            details: dto.details,
+        });
+
+        return dispute.save(); // no more _id issues
+    }
+
+    // Appraisal Template Methods
+    async createAppraisalTemplate(createTemplateDto: any) {
+        const template = new this.appraisalTemplateModel(createTemplateDto);
+        return await template.save();
+    }
+
+    async getAllAppraisalTemplates() {
+        return await this.appraisalTemplateModel
+      .find({ isActive: true })
       .exec();
-  }
+    }
+
+    async getAppraisalTemplateById(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new NotFoundException('Invalid template ID');
+        }
+        const template = await this.appraisalTemplateModel
+        .findById(id)
+        .exec();
+        
+        if (!template) {
+            throw new NotFoundException('Appraisal template not found');
+        }
+        return template;
+    }
+
+    async updateAppraisalTemplate(id: string, updateTemplateDto: any) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new NotFoundException('Invalid template ID');
+        }
+        
+        const template = await this.appraisalTemplateModel
+        .findByIdAndUpdate(id, updateTemplateDto, { new: true })
+        .exec();
+        
+        if (!template) {
+            throw new NotFoundException('Appraisal template not found');
+        }
+        return template;
+    }
+
+    // Appraisal Cycle Methods
+    async createAppraisalCycle(createCycleDto: any) {
+        // Validate dates
+        if (new Date(createCycleDto.startDate) >= new Date(createCycleDto.endDate)) {
+            throw new BadRequestException('Start date must be before end date');
+        }
+
+        const cycle = new this.appraisalCycleModel(createCycleDto);
+        return await cycle.save();
+    }
+
+    async getAllAppraisalCycles() {
+        return await this.appraisalCycleModel
+            .find()
+            // REMOVE the broken populates
+            .sort({ startDate: -1 })
+            .exec();
+    }
+
+
+    async getAppraisalCycleById(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new NotFoundException('Invalid cycle ID');
+        }
+
+        return await this.appraisalCycleModel
+            .findById(id)
+            // REMOVE broken populate lines
+            .exec();
+    }
+
+
+    async updateAppraisalCycleStatus(id: string, status: AppraisalCycleStatus) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new NotFoundException('Invalid cycle ID');
+        }
+
+        const updateData: any = { status };
+        
+        // Set timestamps based on status changes
+        if (status === AppraisalCycleStatus.ACTIVE) {
+        updateData.publishedAt = new Date();
+        } 
+        else if (status === AppraisalCycleStatus.CLOSED) {
+        updateData.closedAt = new Date();
+        } 
+        else if (status === AppraisalCycleStatus.ARCHIVED) {
+        updateData.archivedAt = new Date();
+        }
+
+        const cycle = await this.appraisalCycleModel
+        .findByIdAndUpdate(id, updateData, { new: true })
+        .exec();
+        
+        if (!cycle) {
+            throw new NotFoundException('Appraisal cycle not found');
+        }
+        return cycle;
+    }
+
+    async getAppraisalAssignmentsByCycle(cycleId: string) {
+        if (!Types.ObjectId.isValid(cycleId)) {
+            throw new NotFoundException('Invalid cycle ID');
+        }
+
+        return await this.appraisalAssignmentModel
+            .find({ cycleId })
+            .populate('employeeProfileId', 'firstName lastName position')
+            .populate('managerProfileId', 'firstName lastName')
+            .populate('templateId', 'name templateType')
+            .populate('departmentId', 'name')
+            .exec();
+    }
+    
+
+    // Appraisal Assignment Methods
+    async createAppraisalAssignments(cycleId: string) {
+        if (!Types.ObjectId.isValid(cycleId)) {
+            throw new NotFoundException('Invalid cycle ID');
+        }
+
+        const cycle = await this.appraisalCycleModel
+            .findById(cycleId)
+            .exec();
+
+        if (!cycle) {
+            throw new NotFoundException('Appraisal cycle not found');
+        }
+
+        if (!cycle.templateAssignments || cycle.templateAssignments.length === 0) {
+            throw new BadRequestException('Cycle has no template assignments');
+        }
+
+        // ⭐ Pull required fields from cycle so we satisfy schema
+        const templateId = cycle.templateAssignments[0].templateId;
+        const departmentId = cycle.templateAssignments[0].departmentIds[0];
+
+        const createdAssignments: AppraisalAssignmentDocument[] = [];
+
+        // Fetch ALL employees
+        const EmployeeProfileModel = this.appraisalAssignmentModel.db.model('EmployeeProfile');
+        const employees = await EmployeeProfileModel.find({});
+
+        for (const emp of employees) {
+            const existing = await this.appraisalAssignmentModel.findOne({
+            cycleId,
+            employeeProfileId: emp._id,
+            });
+
+            if (existing) continue;
+
+            const newAssignment = new this.appraisalAssignmentModel({
+            cycleId,
+            templateId,       // ⭐ REQUIRED
+            employeeProfileId: emp._id,
+            
+            // ⭐ Your DB has no supervisor hierarchy → use employee as own manager
+            managerProfileId: emp._id,
+
+            // ⭐ REQUIRED and must match cycle's department
+            departmentId,
+
+            status: AppraisalAssignmentStatus.NOT_STARTED,
+            assignedAt: new Date(),
+            });
+
+            const saved = await newAssignment.save();
+            createdAssignments.push(saved);
+        }
+
+        return createdAssignments;
+    }
+
+
+
+
+
+    async getEmployeeAppraisals(employeeProfileId: string) {
+        if (!Types.ObjectId.isValid(employeeProfileId)) {
+            throw new NotFoundException('Invalid employee profile ID');
+        }
+
+        return await this.appraisalAssignmentModel
+        .find({ employeeProfileId })
+        .populate('cycleId', 'name cycleType startDate endDate status')
+        .populate('templateId', 'name templateType')
+        .populate('managerProfileId', 'firstName lastName')
+        .populate('departmentId', 'name')
+        .sort({ assignedAt: -1 })
+        .exec();
+    }
+
+    async getManagerAppraisalAssignments(managerProfileId: string) {
+        if (!Types.ObjectId.isValid(managerProfileId)) {
+            throw new NotFoundException('Invalid manager profile ID');
+        }
+
+        return await this.appraisalAssignmentModel
+        .find({ managerProfileId })
+        .populate('employeeProfileId', 'firstName lastName position')
+        .populate('cycleId', 'name cycleType startDate endDate status')
+        .populate('templateId', 'name templateType')
+        .populate('departmentId', 'name')
+        .sort({ dueDate: 1 })
+        .exec();
+    }
+
+    async getAppraisalAssignmentById(assignmentId: string) {
+        if (!Types.ObjectId.isValid(assignmentId)) {
+            throw new NotFoundException('Invalid assignment ID');
+        }
+
+        const assignment = await this.appraisalAssignmentModel
+            .findById(assignmentId)
+            .populate('employeeProfileId', 'firstName lastName position departmentId')
+            .populate('managerProfileId', 'firstName lastName')
+            .populate('templateId', 'name templateType evaluationCriteria')
+            .populate('cycleId', 'name startDate endDate status')
+            .populate('departmentId', 'name')
+            .exec();
+
+        if (!assignment) {
+            throw new NotFoundException('Appraisal assignment not found');
+        }
+        return assignment;
+    }
+
+    async updateAppraisalAssignmentStatus(assignmentId: string, status: string) {
+        if (!Types.ObjectId.isValid(assignmentId)) {
+            throw new NotFoundException('Invalid assignment ID');
+        }
+
+        const assignment = await this.appraisalAssignmentModel
+            .findByIdAndUpdate(
+            assignmentId, 
+            { status }, 
+            { new: true }
+            )
+            .exec();
+
+        if (!assignment) {
+            throw new NotFoundException('Appraisal assignment not found');
+        }
+        return assignment;
+    }
+
+    // Appraisal Record Methods
+    async createOrUpdateAppraisalRecord(assignmentId: string, createRecordDto: any) {
+        if (!Types.ObjectId.isValid(assignmentId)) {
+            throw new NotFoundException('Invalid assignment ID');
+        }
+
+        const assignment = await this.appraisalAssignmentModel.findById(assignmentId).exec();
+        if (!assignment) {
+            throw new NotFoundException('Appraisal assignment not found');
+        }
+
+        // Calculate total score
+        let totalScore = 0;
+        if (createRecordDto.ratings && createRecordDto.ratings.length > 0) {
+            totalScore = createRecordDto.ratings.reduce((sum: number, rating: any) => {
+                return sum + (rating.weightedScore || rating.ratingValue);
+            }, 0);
+        }
+
+        const recordData = {
+        ...createRecordDto,
+        assignmentId,
+        cycleId: assignment.cycleId,
+        templateId: assignment.templateId,
+        employeeProfileId: assignment.employeeProfileId,
+        managerProfileId: assignment.managerProfileId,
+        totalScore,
+        status: AppraisalRecordStatus.DRAFT,
+        };
+
+        // Find existing record or create new one
+        let record = await this.appraisalRecordModel.findOne({ assignmentId }).exec();
+        
+        if (record) {
+            record = await this.appraisalRecordModel
+            .findOneAndUpdate({ assignmentId }, recordData, { new: true })
+            .exec();
+        } 
+        else {
+            record = new this.appraisalRecordModel(recordData);
+            await record.save();
+        }
+        return record;
+    }
+
+    async submitAppraisalRecord(assignmentId: string) {
+        if (!Types.ObjectId.isValid(assignmentId)) {
+            throw new NotFoundException('Invalid assignment ID');
+        }
+
+        const record = await this.appraisalRecordModel.findOne({ assignmentId }).exec();
+        if (!record) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        // Update record status
+        record.status = AppraisalRecordStatus.MANAGER_SUBMITTED;
+        record.managerSubmittedAt = new Date();
+        await record.save();
+
+        // Update assignment status
+        await this.appraisalAssignmentModel
+        .findByIdAndUpdate(assignmentId, {
+            status: AppraisalAssignmentStatus.SUBMITTED,
+            submittedAt: new Date(),
+            latestAppraisalId: record._id,
+        })
+        .exec();
+
+        return record;
+    }
+
+    async publishAppraisalRecord(assignmentId: string, publishedByEmployeeId: string) {
+        if (!Types.ObjectId.isValid(assignmentId)) {
+            throw new NotFoundException('Invalid assignment ID');
+        }
+
+        const record = await this.appraisalRecordModel.findOne({ assignmentId }).exec();
+        if (!record) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        // Update record status
+        record.status = AppraisalRecordStatus.HR_PUBLISHED;
+        record.hrPublishedAt = new Date();
+        record.publishedByEmployeeId = new Types.ObjectId(publishedByEmployeeId);
+        await record.save();
+
+        // Update assignment status
+        await this.appraisalAssignmentModel
+        .findByIdAndUpdate(assignmentId, {
+            status: AppraisalAssignmentStatus.PUBLISHED,
+            publishedAt: new Date(),
+        })
+        .exec();
+
+        return record;
+    }
+
+    async getAppraisalRecordById(recordId: string) {
+        if (!Types.ObjectId.isValid(recordId)) {
+            throw new NotFoundException('Invalid record ID');
+        }
+
+        const record = await this.appraisalRecordModel
+            .findById(recordId)
+            .populate('assignmentId')
+            .populate('cycleId', 'name cycleType')
+            .populate('templateId', 'name templateType')
+            .populate('employeeProfileId', 'firstName lastName position')
+            .populate('managerProfileId', 'firstName lastName')
+            .populate('publishedByEmployeeId', 'firstName lastName')
+            .exec();
+
+        if (!record) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+        return record;
+    }
+
+    async updateAppraisalRecordStatus(recordId: string, status: string) {
+        if (!Types.ObjectId.isValid(recordId)) {
+            throw new NotFoundException('Invalid record ID');
+        }
+
+        const record = await this.appraisalRecordModel
+            .findByIdAndUpdate(
+            recordId, 
+            { status }, 
+            { new: true }
+            )
+            .exec();
+
+        if (!record) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+        return record;
+    }
+
+    // Appraisal Dispute Methods
+    async createAppraisalDispute(createDisputeDto: any) {
+        const requiredIds = [
+            "appraisalId",
+            "assignmentId",
+            "cycleId",
+            "raisedByEmployeeId"
+        ];
+
+        for (const field of requiredIds) {
+            if (!createDisputeDto[field]) {
+            throw new BadRequestException(`${field} is required`);
+            }
+            if (!Types.ObjectId.isValid(createDisputeDto[field])) {
+            throw new BadRequestException(`${field} is not a valid ObjectId`);
+            }
+        }
+
+        // ⭐ FIX #1 — MANUALLY GENERATE _id BECAUSE SCHEMA OVERRIDES IT
+        const _id = new Types.ObjectId();
+
+        // ⭐ FIX #2 — Convert all IDs to ObjectId
+        const dto = {
+            _id,
+            appraisalId: new Types.ObjectId(createDisputeDto.appraisalId),
+            assignmentId: new Types.ObjectId(createDisputeDto.assignmentId),
+            cycleId: new Types.ObjectId(createDisputeDto.cycleId),
+            raisedByEmployeeId: new Types.ObjectId(createDisputeDto.raisedByEmployeeId),
+            reason: createDisputeDto.reason,
+            details: createDisputeDto.details,
+            status: AppraisalDisputeStatus.OPEN,
+            submittedAt: new Date()
+        };
+
+        const dispute = new this.appraisalDisputeModel(dto);
+        return await dispute.save();
+    }
+
+
+
+    async getAppraisalDisputes(cycleId?: string) {
+        const query: any = {};
+        if (cycleId && Types.ObjectId.isValid(cycleId)) {
+            query.cycleId = new Types.ObjectId(cycleId);
+        }
+
+        return await this.appraisalDisputeModel
+        .find(query)
+        .populate('appraisalId')
+        .populate('assignmentId')
+        .populate('cycleId', 'name cycleType')
+        .populate('raisedByEmployeeId', 'firstName lastName')
+        .populate('assignedReviewerEmployeeId', 'firstName lastName')
+        .populate('resolvedByEmployeeId', 'firstName lastName')
+        .sort({ submittedAt: -1 })
+        .exec();
+    }
+
+    async updateDisputeStatus(
+  disputeId: string, 
+  status: AppraisalDisputeStatus, 
+  resolutionData?: any
+) {
+    // 1. Validate disputeId BEFORE ANYTHING
+    if (!Types.ObjectId.isValid(disputeId)) {
+        throw new NotFoundException('Invalid dispute ID');
+    }
+
+    const _id = new Types.ObjectId(disputeId);
+
+    // 2. Prepare update object
+    const updateData: any = { status };
+
+    // 3. Only add resolved info IF status requires it
+    if (status === AppraisalDisputeStatus.ADJUSTED || 
+        status === AppraisalDisputeStatus.REJECTED) {
+
+        updateData.resolvedAt = new Date();
+
+        // ⚠ FIX: Only convert if valid string
+        if (resolutionData?.resolvedByEmployeeId && 
+            Types.ObjectId.isValid(resolutionData.resolvedByEmployeeId)) {
+
+            updateData.resolvedByEmployeeId = new Types.ObjectId(
+                resolutionData.resolvedByEmployeeId
+            );
+        }
+
+        if (resolutionData?.resolutionSummary) {
+            updateData.resolutionSummary = resolutionData.resolutionSummary;
+        }
+    }
+
+    // 4. Run update with safe ObjectId
+    const dispute = await this.appraisalDisputeModel
+        .findOneAndUpdate({ _id }, updateData, { new: true })
+        .exec();
+
+    // 5. STILL not found? → real 404
+    if (!dispute) {
+        throw new NotFoundException('Appraisal dispute not found');
+    }
+
+    return dispute;
+}
+
+
+    async getAppraisalDisputeById(disputeId: string) {
+        let id: Types.ObjectId;
+
+        try {
+            id = new Types.ObjectId(disputeId);
+        } catch {
+            throw new NotFoundException('Invalid dispute ID');
+        }
+
+        const dispute = await this.appraisalDisputeModel
+            .findOne({ _id: id }) // <-- do NOT use findById
+            .populate('appraisalId')
+            .populate('assignmentId')
+            .populate('cycleId', 'name cycleType')
+            .populate('raisedByEmployeeId', 'firstName lastName')
+            .populate('assignedReviewerEmployeeId', 'firstName lastName')
+            .populate('resolvedByEmployeeId', 'firstName lastName')
+            .exec();
+
+        if (!dispute) {
+            throw new NotFoundException('Appraisal dispute not found');
+        }
+
+        return dispute;
+    }
+
+
+    async assignDisputeReviewer(disputeId: string, reviewerId: string) {
+        // Validate IDs
+        if (!Types.ObjectId.isValid(disputeId)) {
+            throw new NotFoundException('Invalid dispute ID');
+        }
+        if (!Types.ObjectId.isValid(reviewerId)) {
+            throw new NotFoundException('Invalid reviewer ID');
+        }
+
+        const _id = new Types.ObjectId(disputeId);
+        const reviewer = new Types.ObjectId(reviewerId);
+
+        const dispute = await this.appraisalDisputeModel
+            .findOneAndUpdate(
+                { _id },   // <<<<<< FIXED FILTER
+                {
+                    assignedReviewerEmployeeId: reviewer,
+                    status: AppraisalDisputeStatus.UNDER_REVIEW
+                },
+                { new: true }
+            )
+            .exec();
+
+        if (!dispute) {
+            throw new NotFoundException('Appraisal dispute not found');
+        }
+
+        return dispute;
+    }
+
+
 }
