@@ -1,11 +1,9 @@
-import { IsString, IsDate, IsEnum, IsOptional, IsMongoId} from 'class-validator';
+import { IsString, IsDate, IsEnum, IsOptional, IsMongoId, IsArray, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OnboardingTaskStatus } from '../enums/onboarding-task-status.enum';
 
-export class CreateOnboardingTaskDto {
-  @IsMongoId()
-  employeeId: string;
-
+// Sub-DTO for individual tasks
+class TaskItemDto {
   @IsString()
   name: string;
 
@@ -34,4 +32,24 @@ export class CreateOnboardingTaskDto {
   @IsString()
   @IsOptional()
   notes?: string;
+}
+
+export class CreateOnboardingTaskDto {
+  @IsMongoId()
+  employeeId: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskItemDto)
+  @IsOptional()
+  tasks?: TaskItemDto[];
+
+  @IsBoolean()
+  @IsOptional()
+  completed?: boolean;
+
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  completedAt?: Date;
 }

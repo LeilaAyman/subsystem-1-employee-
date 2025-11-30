@@ -13,7 +13,7 @@ import { UpdateJobTemplateDto } from '../dto/update-job-template.dtos';
 import { CreateJobRequisitionDto } from '../dto/create-job-requisition.dto';
 import { UpdateJobRequisitionDto } from '../dto/update-job-requisition.dto';
 import { UpdateApplicationDto } from '../dto/update-application.dto';
-//import { NotificationLog, NotificationLogDocument } from 'src/time-management/models/notification-log.schema';
+
 
 @Controller('recruitment')
 export class RecruitmentController {
@@ -110,14 +110,20 @@ export class RecruitmentController {
   //interview
 
   @Post('interviews')
-  createInterview(@Body() createInterviewDto: CreateInterviewDto) {
-    return this.recruitmentService.createInterview(createInterviewDto);
-  }
+createInterview(@Body() createInterviewDto: CreateInterviewDto) {
+  return this.recruitmentService.createInterview(createInterviewDto);
+}
 
   @Get('interviews')
   getAllInterviews() {
     return this.recruitmentService.getAllInterviews();
   }
+
+  @Get('interviews/panel-member/:userId')
+  getInterviewsByPanelMember(@Param('userId') userId: string) {
+    return this.recruitmentService.getInterviewsByPanelMember(userId);
+  }
+
 
   @Get('interviews/:id')
   getInterview(@Param('id') id: string) {
@@ -141,6 +147,11 @@ export class RecruitmentController {
     return this.recruitmentService.getAllFeedback();
   }
 
+  // @Get('feedback/by-interview/:interviewId') 
+  // getFeedbackByInterview(@Param('interviewId') interviewId: string) {
+  //   return this.recruitmentService.getFeedbackByInterview(interviewId);
+  // }
+
   @Get('feedback/:id')
   getFeedback(@Param('id') id: string) {
     return this.recruitmentService.getFeedback(id);
@@ -149,6 +160,13 @@ export class RecruitmentController {
   @Patch('feedback/:id')
   updateFeedback(@Param('id') id: string, @Body() updateFeedbackDto: UpdateFeedbackDto) {
     return this.recruitmentService.updateFeedback(id, updateFeedbackDto);
+  }
+
+  // application history routes
+
+  @Get('applications/:id/history')
+  getApplicationHistory(@Param('id') id: string) {
+    return this.recruitmentService.getApplicationHistory(id);
   }
 
   //application routes

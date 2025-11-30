@@ -1,24 +1,4 @@
-import { IsMongoId, IsOptional, IsEnum, IsString } from 'class-validator';
-import { DocumentType } from '../enums/document-type.enum'; 
+import { CreateOnboardingDocumentDto } from "./create-onboarding-document.dto";
+import { PartialType } from "@nestjs/mapped-types";
 
-export class UpdateOnboardingDocumentDto {
-  @IsMongoId()
-  @IsOptional()
-  candidateId?: string;
-
-  @IsMongoId()
-  @IsOptional()
-  employeeId?: string;
-
-  @IsEnum(DocumentType)
-  @IsOptional()
-  documentType?: DocumentType;
-
-  @IsString()
-  @IsOptional()
-  documentName?: string;
-
-  @IsString()
-  @IsOptional()
-  documentUrl?: string;
-}
+export class UpdateOnboardingDocumentDto extends PartialType(CreateOnboardingDocumentDto) {}

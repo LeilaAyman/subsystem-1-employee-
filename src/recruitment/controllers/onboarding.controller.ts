@@ -50,6 +50,11 @@ export class OnboardingController {
     return this.onboardingService.getDocumentsByCandidate(candidateId);
   }
 
+  @Get('documents/employee/:employeeId')
+  async getDocumentsByEmployee(@Param('employeeId') employeeId: string) {
+    return this.onboardingService.getDocumentsByEmployee(employeeId);
+  }
+
   @Post('documents')
   async createDocument(@Body() dto: CreateOnboardingDocumentDto) {
     return this.onboardingService.createOnboardingDocument(dto);

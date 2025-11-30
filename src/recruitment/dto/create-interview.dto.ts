@@ -1,9 +1,9 @@
 import {
   IsArray,IsDate,IsEnum,IsMongoId,IsOptional,IsString ,IsUrl} from "class-validator";
 import { Type } from "class-transformer";
-import { InterviewMethod } from "src/recruitment/enums/interview-method.enum";
-import { InterviewStatus } from "src/recruitment/enums/interview-status.enum";
-import { ApplicationStage } from "src/recruitment/enums/application-stage.enum";
+import { InterviewMethod } from "src/enums/interview-method.enum";
+import { InterviewStatus } from "src/enums/interview-status.enum";
+import { ApplicationStage } from "src/enums/application-stage.enum";
 
 export class CreateInterviewDto {
   @IsMongoId()

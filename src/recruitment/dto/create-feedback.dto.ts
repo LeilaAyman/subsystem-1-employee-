@@ -1,21 +1,18 @@
-import {IsMongoId, IsString , isMongoId  , IsInt , IsOptional} from "class-validator";
+import { IsMongoId, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class CreateFeedbackDto {
-
   @IsMongoId()
   interviewId: string;
 
   @IsMongoId()
   interviewerId: string;
 
-  @IsMongoId()
-  candidateId: string;
-
-  @IsInt()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
   score: number;
 
   @IsOptional()
   @IsString()
-  comments?: string ;
-
+  comments?: string;
 }

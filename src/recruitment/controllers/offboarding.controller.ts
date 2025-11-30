@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, HttpStatus, Patch, Query } from '@nestjs/common';
 import { OffboardingService } from '../services/offboarding.service';
 import { CreateTerminationRequestDto } from '../dto/create-termination-request.dto';
 import { UpdateTerminationRequestDto } from '../dto/update-termination-request.dto';
@@ -18,16 +18,16 @@ export class OffboardingController {
   }
 
   @Get('requests')
-  async getAllTerminationRequests() {
-    return this.offboardingService.getAllTerminationRequests();
-  }
+async getAllTerminationRequests(@Query('employeeId') employeeId?: string) {
+  return this.offboardingService.getAllTerminationRequests(employeeId);
+}
 
   @Get('requests/:id')
   async getTerminationRequest(@Param('id') id: string) {
     return this.offboardingService.getTerminationRequest(id);
   }
 
-  @Put('requests/:id')
+  @Patch('requests/:id')
   async updateTerminationRequest(
     @Param('id') id: string,
     @Body() updateDto: UpdateTerminationRequestDto,
@@ -44,8 +44,8 @@ export class OffboardingController {
   }
 
   @Get('checklists')
-  async getAllClearanceChecklists() {
-    return this.offboardingService.getAllClearanceChecklists();
+  async getAllClearanceChecklists(@Query('terminationId') terminationId?: string) {
+    return this.offboardingService.getAllClearanceChecklists(terminationId);
   }
 
   @Get('checklists/:id')
@@ -53,7 +53,7 @@ export class OffboardingController {
     return this.offboardingService.getClearanceChecklist(id);
   }
 
-  @Put('checklists/:id')
+  @Patch('checklists/:id')
   async updateClearanceChecklist(
     @Param('id') id: string,
     @Body() updateDto: UpdateClearanceChecklistDto,

@@ -5,17 +5,21 @@ import { Onboarding, OnboardingDocument } from '../models/onboarding.schema';
 import { Contract, ContractDocument } from '../models/contract.schema';
 import { CreateOnboardingTaskDto } from '../dto/create-onboarding-task.dto';
 import { UpdateOnboardingTaskDto } from '../dto/update-onboarding-task.dto';
-import { OnboardingTaskStatus } from 'src/recruitment/enums/onboarding-task-status.enum';
+//import { OnboardingTaskStatus } from 'src/enums/onboarding-task-status.enum';
 import { NotificationLogService } from 'src/time-management/services/notification-log.service'; 
 import { Offer , OfferDocument } from '../models/offer.schema';
-import { CreateContractDto } from 'src/recruitment/dto/create-onboarding-contract.dto';
-import { UpdateContractDto } from 'src/recruitment/dto/update-onboarding-contract.dto';
-import { CreateOnboardingDocumentDto } from 'src/recruitment/dto/create-onboarding-document.dto';
-import { UpdateOnboardingDocumentDto } from 'src/recruitment/dto/update-onboarding-document.dto';
-import { DocumentDocument } from 'src/recruitment/models/document.schema';
-import { Application , ApplicationDocument} from 'src/recruitment/models/application.schema';
-import { ApplicationStatus } from 'src/recruitment/enums/application-status.enum';
+import { CreateContractDto } from '../dto/create-onboarding-contract.dto';
+import { UpdateContractDto } from '../dto/update-onboarding-contract.dto';
+import { CreateOnboardingDocumentDto } from '../dto/create-onboarding-document.dto';
+import { UpdateOnboardingDocumentDto } from '../dto/update-onboarding-document.dto';
+import { DocumentDocument } from '../models/document.schema';
+import { Application , ApplicationDocument} from '../models/application.schema';
+import { ApplicationStatus } from '../enums/application-status.enum';
 import { Document } from '../models/document.schema';
+//ERRORS WILL DISSAPEAR ONCE ALL IS MERGED INTO MAIN -DO NOT REMOVE ANYTHING
+import { EmployeeCrudService } from 'src/employee-profile/services/employee-crud.service';
+import { EmployeeStatus, SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
+//import { PayrollExecutionService } from 'src/external-controller-services/services/payroll-execution-service.service';
 
 @Injectable()
 export class OnboardingService {
@@ -36,6 +40,10 @@ export class OnboardingService {
     private readonly applicationModel: Model<ApplicationDocument>,
     
     private readonly notificationLogService: NotificationLogService,
+
+    private readonly employeeCrudService: EmployeeCrudService ,
+
+    //private readonly payrollConfigService: 
 
 
   ) {}
@@ -102,9 +110,7 @@ export class OnboardingService {
     }
 
     // Trigger: Both signatures complete - update to HIRED and trigger all systems
-    if (
-      updatedContract.employeeSignedAt &&
-      updatedContract.employerSignedAt &&
+    if (updatedContract.employeeSignedAt && updatedContract.employerSignedAt &&
       (!currentContract.employeeSignedAt || !currentContract.employerSignedAt)
     ) {
       const application = await this.applicationModel.findById(offer.applicationId);
@@ -114,6 +120,33 @@ export class OnboardingService {
           { status: ApplicationStatus.HIRED },
           { new: true }
         );
+
+      // Create employee profile from candidate data once both sign 
+
+      // const candidate = await this.employeeCrudService.findById(candidateID.toString)
+      
+      // if(!candidate) {
+      //   await this.employeeCrudService.create({
+      //     firstName: candidate.firstName,
+      //     lastName: candidate.lastName,
+      //     //email: candidate.email,
+      //     //phone: candidate.phone,
+      //     dateOfBirth: candidate.dateOfBirth,
+      //     address: candidate.address,
+      //     // Add other required fields from CreateEmployeeDto
+      //     roles: [SystemRole.DEPARTMENT_EMPLOYEE], // Default role
+      //     permissions: [],
+      //     hireDate: new Date(),
+      //     status: EmployeeStatus.ACTIVE,
+      //   });
+      // }
+
+      //handle payroll signing bonus - need payroll config
+        // const bonus = updatedContract.signingBonus ;
+
+        // await PayrollExecutionService.approveSigningBonus(id ?)
+
+    
 
         // Notify IT/Facilities to prepare equipment
         await this.notificationLogService.sendNotification({
@@ -176,6 +209,10 @@ export class OnboardingService {
     return this.documentModel.find({ candidateId }).exec();
   }
 
+  async getDocumentsByEmployee(employeeId: string): Promise<DocumentDocument[]> {
+  return this.documentModel.find({ employeeId }).exec();
+}
+
   async updateOnboardingDocument(id: string,documentData: UpdateOnboardingDocumentDto): Promise<DocumentDocument> {
     const updatedDocument = await this.documentModel.findByIdAndUpdate(id,documentData,{ new: true, runValidators: true });
 
@@ -206,11 +243,11 @@ export class OnboardingService {
 
   async getAllTasks(): Promise<OnboardingDocument[]> {
 
-    return this.onboardingModel.find().populate('employeeId').exec();
+    return this.onboardingModel.find()/*.populate('employeeId')*/.exec();
   }
 
   async getTaskById(taskId: string): Promise<OnboardingDocument> {
-    const onboarding = await this.onboardingModel.findById(taskId).populate('employeeId').exec();
+    const onboarding = await this.onboardingModel.findById(taskId)/*.populate('employeeId')*/.exec();
 
     if (!onboarding) {
       throw new NotFoundException(`Onboarding record with ID ${taskId} not found`);
