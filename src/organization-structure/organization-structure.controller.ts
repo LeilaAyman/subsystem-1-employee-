@@ -14,6 +14,7 @@ import { OrganizationStructureService } from './organization-structure.service';
 import { CreateDepartmentDto } from './dtos/create-department.dto';
 import { UpdateDepartmentDto } from './dtos/update-department.dto';
 
+@ApiTags('Organization Structure')
 @Controller('organization-structure')
 export class OrganizationStructureController {
   constructor(
