@@ -1,5 +1,18 @@
-import { Controller, Get, Post, Put, Patch, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { OrganizationStructureService } from './organization-structure.service';
+
+// Department DTOs
+import { CreateDepartmentDto } from './dtos/create-department.dto';
+import { UpdateDepartmentDto } from './dtos/update-department.dto';
 
 @Controller('organization-structure')
 export class OrganizationStructureController {
@@ -7,16 +20,19 @@ export class OrganizationStructureController {
     private readonly organizationStructureService: OrganizationStructureService,
   ) {}
 
-  //departments
+  // ======================
+  // 📌 DEPARTMENTS
+  // ======================
 
   @Post('departments')
-  createDepartment(@Body() dto: any) {
+  createDepartment(@Body() dto: CreateDepartmentDto) {
     return this.organizationStructureService.createDepartment(dto);
   }
 
   @Get('departments')
-  getAllDepartments() {
-    return this.organizationStructureService.getAllDepartments();
+  getAllDepartments(@Query('includeInactive') includeInactive?: string) {
+    const showInactive = includeInactive === 'true';
+    return this.organizationStructureService.getAllDepartments(showInactive);
   }
 
   @Get('departments/:id')
@@ -25,7 +41,10 @@ export class OrganizationStructureController {
   }
 
   @Put('departments/:id')
-  updateDepartment(@Param('id') id: string, @Body() dto: any) {
+  updateDepartment(
+    @Param('id') id: string,
+    @Body() dto: UpdateDepartmentDto,
+  ) {
     return this.organizationStructureService.updateDepartment(id, dto);
   }
 
@@ -33,7 +52,10 @@ export class OrganizationStructureController {
   deactivateDepartment(@Param('id') id: string) {
     return this.organizationStructureService.deactivateDepartment(id);
   }
-  //positions
+
+  // ======================
+  // 📌 POSITIONS
+  // ======================
 
   @Post('positions')
   createPosition(@Body() dto: any) {
@@ -69,12 +91,16 @@ export class OrganizationStructureController {
   deactivatePosition(@Param('id') id: string) {
     return this.organizationStructureService.deactivatePosition(id);
   }
-  //structure change request
+
+  // ======================
+  // 📌 STRUCTURE CHANGE REQUESTS
+  // ======================
 
   @Post('change-requests')
-  submitChangeRequest(@Body() dto: any) {
-    return this.organizationStructureService.submitChangeRequest(dto);
-  }
+submitChangeRequest(@Body() dto: any) {
+  return this.organizationStructureService.submitChangeRequest(dto);
+}
+
 
   @Get('change-requests')
   getAllChangeRequests() {
