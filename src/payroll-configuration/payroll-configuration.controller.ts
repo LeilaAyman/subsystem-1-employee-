@@ -22,6 +22,8 @@ import { payrollPoliciesDocument } from './models/payrollPolicies.schema';
 import { CreateCompanySettingsDto } from './dto/create-company-settings.dto';
 import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
 import { ApprovalDto } from './dto/approval.dto';
+import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
+import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
 
 @Controller('payroll-configuration')
 export class PayrollConfigurationController {
@@ -195,5 +197,100 @@ export class PayrollConfigurationController {
   @Post('approval')
   approveOrReject(@Body() dto: ApprovalDto) {
     return this.payrollConfigurationService.approveOrReject(dto);
+  }
+
+  // -------------------
+  // LEGAL & POLICY ADMIN - TAX RULES
+  // -------------------
+
+  @Get('tax-rules')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN)
+  async getAllTaxRules() {
+    return this.payrollConfigurationService.findAllTaxRules();
+  }
+
+  @Get('tax-rules/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN)
+  async getTaxRuleById(@Param('id') id: string) {
+    return this.payrollConfigurationService.findTaxRuleById(id);
+  }
+
+  @Post('tax-rules')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN)
+  async createTaxRule(@Body() taxRuleData: createTaxRulesDTO) {
+    return this.payrollConfigurationService.createTaxRule(taxRuleData);
+  }
+
+  @Put('tax-rules/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN)
+  async updateTaxRule(
+    @Param('id') id: string,
+    @Body() updateData: editTaxRulesDTO
+  ) {
+    return this.payrollConfigurationService.updateTaxRule(id, updateData);
+  }
+
+  @Delete('tax-rules/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN)
+  async deleteTaxRule(@Param('id') id: string) {
+    return this.payrollConfigurationService.deleteTaxRule(id);
+  }
+
+  // -------------------
+  // PAYROLL SPECIALIST - TERMINATION & RESIGNATION BENEFITS
+  // -------------------
+
+  @Get('termination-resignation-benefits')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllTerminationAndResignationBenefits() {
+    return this.payrollConfigurationService.getAllTerminationAndResignationBenefits();
+  }
+
+  @Get('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getTerminationAndResignationBenefitById(@Param('id') id: string) {
+    return this.payrollConfigurationService.getTerminationAndResignationBenefitById(id);
+  }
+
+  @Post('termination-resignation-benefits')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createTerminationAndResignationBenefit(@Body() benefitsData: createResigAndTerminBenefitsDTO) {
+    return this.payrollConfigurationService.createTerminationAndResignationBenefit(benefitsData);
+  }
+
+  @Put('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async updateTerminationAndResignationBenefit(
+    @Param('id') id: string,
+    @Body() updateData: createResigAndTerminBenefitsDTO
+  ) {
+    return this.payrollConfigurationService.updateTerminationAndResignationBenefit(id, updateData);
+  }
+
+  @Delete('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deleteTerminationAndResignationBenefit(@Param('id') id: string) {
+    return this.payrollConfigurationService.deleteTerminationAndResignationBenefit(id);
+  }
+
+  // -------------------
+  // SYSTEM ADMIN - BACKUP
+  // -------------------
+
+  @Post('backup')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.SYSTEM_ADMIN)
+  async backupPayrollData() {
+    return this.payrollConfigurationService.backupPayrollData();
   }
 }

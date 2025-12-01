@@ -27,22 +27,24 @@ import { editInsuranceBracketsDTO } from './dto/edit-insurance.dto';
 import { CreateCompanySettingsDto } from './dto/create-company-settings.dto';
 import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
 import { ApprovalDto } from './dto/approval.dto';
+import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
+import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
 
 
 @Injectable()
 export class PayrollConfigurationService 
 {
-    constructor( 
-        @InjectModel(payrollPolicies.name) private payrollPoliciesModel: Mongoose.Model<payrollPoliciesDocument>,
-        @InjectModel(payGrade.name) private payGradeModel: Mongoose.Model<payGradeDocument>,
-        @InjectModel(allowance.name) private allowanceModel: Mongoose.Model<allowanceDocument>,
-        @InjectModel(CompanyWideSettings.name) private companyWideSettingsModel: Mongoose.Model<CompanyWideSettingsDocument>,
-        @InjectModel(insuranceBrackets.name) private insuranceBracketsModel: Mongoose.Model<insuranceBracketsDocument>,
-        @InjectModel(payType.name) private payTypeModel: Mongoose.Model<payTypeDocument>,
-        @InjectModel(signingBonus.name) private signingBonusModel: Mongoose.Model<signingBonusDocument>,
-        @InjectModel(taxRules.name) private taxRulesModel: Mongoose.Model<taxRulesDocument>,
-        @InjectModel(terminationAndResignationBenefits.name) private terminationAndResignationBenefitsModel: Mongoose.Model<terminationAndResignationBenefitsDocument>,
-    ) {}
+        constructor( 
+            @InjectModel(payrollPolicies.name) private payrollPoliciesModel: Mongoose.Model<payrollPoliciesDocument>,
+            @InjectModel(payGrade.name) private payGradeModel: Mongoose.Model<payGradeDocument>,
+            @InjectModel(allowance.name) private allowanceModel: Mongoose.Model<allowanceDocument>,
+            @InjectModel(CompanyWideSettings.name) private companyWideSettingsModel: Mongoose.Model<CompanyWideSettingsDocument>,
+            @InjectModel(insuranceBrackets.name) private insuranceBracketsModel: Mongoose.Model<insuranceBracketsDocument>,
+            @InjectModel(payType.name) private payTypeModel: Mongoose.Model<payTypeDocument>,
+            @InjectModel(signingBonus.name) private signingBonusModel: Mongoose.Model<signingBonusDocument>,
+            @InjectModel(taxRules.name) private taxRulesModel: Mongoose.Model<taxRulesDocument>,
+            @InjectModel(terminationAndResignationBenefits.name) private terminationAndResignationBenefitsModel: Mongoose.Model<terminationAndResignationBenefitsDocument>,
+        ) {}
 
 
     /////////// PAYROLL SPECIALIST METHODS ///////////////
@@ -319,13 +321,109 @@ export class PayrollConfigurationService
     const status = action === 'approve' ? 'approved' : 'rejected';
     return targetModel.findByIdAndUpdate(id, { approvalStatus: status }, { new: true });
   }
+
+  // -------------------
+  // LEGAL & POLICY ADMIN - TAX RULES
+  // -------------------
+
+  async findAllTaxRules(): Promise<taxRulesDocument[]> {
+    return this.taxRulesModel.find().exec();
+  }
+
+  async findTaxRuleById(id: string): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findById(id).exec();
+  }
+
+  async createTaxRule(taxRuleData: createTaxRulesDTO): Promise<taxRulesDocument> {
+    const newTaxRule = new this.taxRulesModel(taxRuleData);
+    return newTaxRule.save();
+  }
+
+  async updateTaxRule(id: string, updateData: editTaxRulesDTO): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async deleteTaxRule(id: string): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findByIdAndDelete(id).exec();
+  }
+
+  // -------------------
+  // PAYROLL SPECIALIST - TERMINATION & RESIGNATION BENEFITS
+  // -------------------
+
+  async getAllTerminationAndResignationBenefits(): Promise<terminationAndResignationBenefitsDocument[]> {
+    return this.terminationAndResignationBenefitsModel.find().exec();
+  }
+
+  async getTerminationAndResignationBenefitById(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findById(id).exec();
+  }
+
+  async createTerminationAndResignationBenefit(data: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument> {
+    const newBenefit = new this.terminationAndResignationBenefitsModel(data);
+    return newBenefit.save();
+  }
+
+  async updateTerminationAndResignationBenefit(id: string, updateData: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async deleteTerminationAndResignationBenefit(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findByIdAndDelete(id).exec();
+  }
+
+  // -------------------
+  // SYSTEM ADMIN - BACKUP FUNCTIONALITY
+  // -------------------
+
+  async backupPayrollData(): Promise<{
+    policies: any[];
+    payGrades: any[];
+    payTypes: any[];
+    allowances: any[];
+    signingBonuses: any[];
+    terminationBenefits: any[];
+    insuranceBrackets: any[];
+    taxRules: any[];
+    companySettings: any[];
+    timestamp: Date;
+  }> {
+    const [
+      policies,
+      payGrades,
+      payTypes,
+      allowances,
+      signingBonuses,
+      terminationBenefits,
+      insuranceBrackets,
+      taxRules,
+      companySettings,
+    ] = await Promise.all([
+      this.payrollPoliciesModel.find().lean().exec(),
+      this.payGradeModel.find().lean().exec(),
+      this.payTypeModel.find().lean().exec(),
+      this.allowanceModel.find().lean().exec(),
+      this.signingBonusModel.find().lean().exec(),
+      this.terminationAndResignationBenefitsModel.find().lean().exec(),
+      this.insuranceBracketsModel.find().lean().exec(),
+      this.taxRulesModel.find().lean().exec(),
+      this.companyWideSettingsModel.find().lean().exec(),
+    ]);
+
+    return {
+      policies,
+      payGrades,
+      payTypes,
+      allowances,
+      signingBonuses,
+      terminationBenefits,
+      insuranceBrackets,
+      taxRules,
+      companySettings,
+      timestamp: new Date(),
+    };
+  }
 }
-
-
-    //////////////  SYSTEM ADMIN  /////////////////////////
-
-
-    ///////////////  LAW ADMIN  //////////////////////////
 
 
 
