@@ -1,6 +1,6 @@
 import { NotificationLogCreateDto } from './../dtos/notification-log-create-dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { NotificationLog, NotificationLogDocument } from './../models/notification-log.schema';
+import { NotificationLog, NotificationLogDocument, NotificationLogSchema } from './../models/notification-log.schema';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Model, Types } from 'mongoose';
 
