@@ -70,11 +70,6 @@ export class PayrollConfigurationController {
     }
 
     //////2- config pay grades
-    @Get('pay-grades')
-    async getAllPayGrades() {
-        return this.payrollConfigurationService.getAllPayGrades();
-    }
-
     @Get('pay-grades/:id')
     async getPayGrade(@Param('id') id: string) {
         return this.payrollConfigurationService.getPayGrade(id);
@@ -136,11 +131,6 @@ export class PayrollConfigurationController {
     }
 
     //////7-set allowances
-    @Get('allowances')
-    async getAllAllowances() {
-        return this.payrollConfigurationService.getAllAllowances();
-    }
-
     @Get('allowances/:id')
     async getAllowance(@Param('id') id: string) {
         return this.payrollConfigurationService.getAllowance(id);
@@ -157,11 +147,6 @@ export class PayrollConfigurationController {
     }
 
     //////19- config policies for signing bonuses
-    @Get('signing-bonuses')
-    async findAllSigningBonuses() {
-        return this.payrollConfigurationService.findAllSigningBonuses();
-    }
-
     @Get('signing-bonuses/:id')
     async findSigningBonus(@Param('id') id: string) {
         return this.payrollConfigurationService.findSigningBonuses(id);
@@ -215,11 +200,6 @@ export class PayrollConfigurationController {
     }
 
     //////21- config insurance brackets w defined salary ranges
-    @Get('insurance-brackets')
-    async findAllInsuranceBrackets() {
-        return this.payrollConfigurationService.findAllInsuranceBrackets();
-    }
-
     @Get('insurance-brackets/:id')
     async findInsuranceBracket(@Param('id') id: string) {
         return this.payrollConfigurationService.findInsuranceBrackets(id);
