@@ -41,10 +41,7 @@ import { ShiftService } from './services/shift.service';
     { name: Shift.name, schema: ShiftSchema },
     { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
     { name: LatenessRule.name, schema: latenessRuleSchema },
-    { name: Holiday.name, schema: HolidaySchema },
-    { name: EmployeeProfile.name, schema:EmployeeProfileSchema},
-    { name: Department.name, schema: DepartmentSchema},
-    { name: Position.name, schema: PositionSchema}
+    { name: Holiday.name, schema: HolidaySchema }
     
   ]),
   forwardRef(()=>EmployeeProfileModule),
