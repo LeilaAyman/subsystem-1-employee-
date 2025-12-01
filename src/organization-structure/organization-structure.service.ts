@@ -7,6 +7,13 @@ import { Position, PositionDocument } from './models/position.schema';
 import { StructureChangeRequest, StructureChangeRequestDocument } from './models/structure-change-request.schema';
 import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
 import { NotificationLogService } from '../time-management/services/notification-log.service';
+import { CreateDepartmentDto } from './dtos/create-department.dto';
+import { UpdateDepartmentDto } from './dtos/update-department.dto';
+import { CreatePositionDto } from './dtos/create-position.dto';
+import { UpdatePositionDto } from './dtos/update-position.dto';
+import { CreateStructureChangeRequestDto } from './dtos/create-structure-change-request.dto';
+import { UpdateStructureChangeRequestDto } from './dtos/update-structure-change-request.dto';
+import { UpdateReportingLineDto } from './dtos/update-reporting-line.dto';
 
 @Injectable()
 export class OrganizationStructureService {
@@ -54,9 +61,9 @@ export class OrganizationStructureService {
   // ======================
   // 📌 CREATE DEPARTMENT
   // ======================
-  async createDepartment(dto: any) {
-    return this.departmentModel.create(dto);
-  }
+ async createDepartment(dto: CreateDepartmentDto) {
+  return this.departmentModel.create(dto);
+}
 
   // ===========================
   // 📌 GET DEPARTMENT BY ID
@@ -80,7 +87,7 @@ export class OrganizationStructureService {
   // ============================
   // 📌 UPDATE DEPARTMENT
   // ============================
-  async updateDepartment(id: string, dto: any) {
+  async updateDepartment(id: string, dto: UpdateDepartmentDto) {
     const updated = await this.departmentModel.findByIdAndUpdate(id, dto, { new: true });
     if (!updated) throw new NotFoundException("Department not found");
     return updated;
@@ -102,7 +109,7 @@ export class OrganizationStructureService {
   // ======================
   // 📌 CREATE POSITION
   // ======================
-  async createPosition(dto: any) {
+  async createPosition(dto: CreatePositionDto) {
     const department = await this.departmentModel.findById(dto.departmentId);
     if (!department) throw new NotFoundException('Department not found');
 
@@ -133,7 +140,7 @@ export class OrganizationStructureService {
   // ======================
   // 📌 UPDATE POSITION
   // ======================
-  async updatePosition(id: string, dto: any) {
+  async updatePosition(id: string, dto: UpdatePositionDto) {
     const updated = await this.positionModel.findByIdAndUpdate(id, dto, { new: true });
     if (!updated) throw new NotFoundException("Position not found");
     return updated;
@@ -142,11 +149,12 @@ export class OrganizationStructureService {
   // ======================
   // 📌 UPDATE REPORTING LINE
   // ======================
-  async updateReportingLine(id: string, dto: any) {
-    const updated = await this.positionModel.findByIdAndUpdate(id, dto, { new: true });
-    if (!updated) throw new NotFoundException("Position not found");
-    return updated;
-  }
+ async updateReportingLine(id: string, dto: UpdateReportingLineDto) {
+  const updated = await this.positionModel.findByIdAndUpdate(id, dto, { new: true });
+  if (!updated) throw new NotFoundException("Position not found");
+  return updated;
+}
+
 
   // ======================
   // 📌 MOVE POSITION
@@ -216,18 +224,18 @@ export class OrganizationStructureService {
   // ======================
   // 📌 DELIMIT POSITION (BR 12, BR 37)
   // ======================
-  async delimitPosition(id: string, dto: any) {
-    const position = await this.positionModel.findById(id).exec();
-    if (!position) throw new NotFoundException("Position not found");
+  async delimitPosition(id: string) {
+  const position = await this.positionModel.findById(id).exec();
+  if (!position) throw new NotFoundException("Position not found");
 
-    // Delimit instead of delete (soft delete)
-    const updated = await this.positionModel.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
-    return updated;
-  }
+  const updated = await this.positionModel.findByIdAndUpdate(
+    id,
+    { isActive: false },
+    { new: true }
+  );
+
+  return updated;
+}
 
   // ======================
   // 📌 APPROVE CHANGE REQUEST (REQ-OSM-04, BR 36)
