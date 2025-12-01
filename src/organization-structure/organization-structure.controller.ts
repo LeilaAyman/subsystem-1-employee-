@@ -107,10 +107,11 @@ export class OrganizationStructureController {
   }
 
   @Patch('positions/:id/delimit')
-  @Roles(SystemRole.SYSTEM_ADMIN)
-  delimitPosition(@Param('id') id: string, @Body() dto: any) {
-    return this.organizationStructureService.delimitPosition(id, dto);
-  }
+@Roles(SystemRole.SYSTEM_ADMIN)
+delimitPosition(@Param('id') id: string) {
+  return this.organizationStructureService.delimitPosition(id);
+}
+
 
   // ======================
   // 📌 STRUCTURE CHANGE REQUESTS
