@@ -19,6 +19,7 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     ConfigModule.forRoot({isGlobal:true}),
     MongooseModule.forRoot(process.env.DB_URL!),
+    AuthModule,
     TimeManagementModule, RecruitmentModule, LeavesModule, PayrollExecutionModule, PayrollConfigurationModule, PayrollTrackingModule, EmployeeProfileModule, OrganizationStructureModule, PerformanceModule],
   controllers: [AppController],
   providers: [AppService],
