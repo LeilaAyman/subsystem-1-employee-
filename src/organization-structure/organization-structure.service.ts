@@ -7,6 +7,10 @@ import { Position, PositionDocument } from './models/position.schema';
 import { StructureChangeRequest, StructureChangeRequestDocument } from './models/structure-change-request.schema';
 import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
 import { NotificationLogService } from '../time-management/services/notification-log.service';
+import { CreateDepartmentDto } from './dtos/create-department.dto';
+import { UpdateDepartmentDto } from './dtos/update-department.dto';
+import { CreatePositionDto } from './dtos/create-position.dto';
+import { UpdatePositionDto } from './dtos/update-position.dto';
 
 @Injectable()
 export class OrganizationStructureService {
