@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TimeManagementController } from './time-management.controller';
 import { TimeManagementService } from './time-management.service';
+import { NotificationLogService } from './services/notification-log.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationLogSchema, NotificationLog } from './models/notification-log.schema';
 import { AttendanceCorrectionRequestSchema, AttendanceCorrectionRequest } from './models/attendance-correction-request.schema';
@@ -47,6 +48,7 @@ import { ScheduleRuleService } from './services/schedule-rule.service';
 
   ],
   controllers: [TimeManagementController],
-  providers: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService]
+  providers: [TimeManagementService, NotificationLogService],
+  exports: [NotificationLogService],
 })
 export class TimeManagementModule {}
