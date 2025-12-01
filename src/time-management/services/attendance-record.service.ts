@@ -10,6 +10,8 @@ import { ShiftAssignment, ShiftAssignmentDocument } from '../models/shift-assign
 import { LatenessRuleService } from './lateness-rule.service';
 import { CreateAttendanceRecordDto } from '../dtos/attendance-record-dto';
 import { UpdateAttendanceRecordDto } from '../dtos/update-attendance-record-dto';
+import { Holiday, HolidayDocument } from '../models/holiday.schema';
+import { HolidayService } from './holiday.service';
 
 @Injectable()
 export class AttendanceRecordService {
@@ -22,7 +24,7 @@ export class AttendanceRecordService {
     @InjectModel(ShiftAssignment.name)
     private shiftAssignmentModel: Model<ShiftAssignmentDocument>,
     private latenessRuleService: LatenessRuleService,
-
+    private holidayService: HolidayService // Added HolidayService dependency
   ) {}
 
   async createAttendanceRecord(dto: CreateAttendanceRecordDto) {
@@ -107,6 +109,19 @@ export class AttendanceRecordService {
     const todayIndex = new Date().getDay();
     if (scheduleRule.pattern[todayIndex] === '0') {
       throw new BadRequestException('Cannot clock in on a rest day.');
+    }
+
+    // Check if today is a holiday
+    const today = new Date();
+    const isHoliday = await this.holidayService.getAllHolidays().then(holidays =>
+      holidays.data.some(holiday => {
+        const holidayDate = new Date(holiday.startDate);
+        return holidayDate.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0);
+      })
+    );
+
+    if (isHoliday) {
+      throw new BadRequestException('Cannot clock in on a holiday.');
     }
   
    
