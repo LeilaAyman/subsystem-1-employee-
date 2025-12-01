@@ -17,7 +17,7 @@ import { Application , ApplicationDocument} from '../models/application.schema';
 import { ApplicationStatus } from '../enums/application-status.enum';
 import { Document } from '../models/document.schema';
 //ERRORS WILL DISSAPEAR ONCE ALL IS MERGED INTO MAIN -DO NOT REMOVE ANYTHING
-import { EmployeeCrudService } from 'src/employee-profile/services/employee-crud.service';
+import { EmployeeProfileService } from 'src/employee-profile/employee-profile.service';
 import { EmployeeStatus, SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
 //import { PayrollExecutionService } from 'src/external-controller-services/services/payroll-execution-service.service';
 
@@ -41,7 +41,7 @@ export class OnboardingService {
     
     private readonly notificationLogService: NotificationLogService,
 
-    private readonly employeeCrudService: EmployeeCrudService ,
+    private readonly employeeCrudService: EmployeeProfileService ,
 
     //private readonly payrollConfigService: 
 

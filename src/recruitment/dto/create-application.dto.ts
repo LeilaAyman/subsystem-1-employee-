@@ -3,8 +3,8 @@ import {
   IsMongoId,
   IsOptional
 } from "class-validator";
-import { ApplicationStage } from "src/enums/application-stage.enum";
-import { ApplicationStatus } from "src/enums/application-status.enum";
+import { ApplicationStage } from "../enums/application-stage.enum";
+import { ApplicationStatus } from "../enums/application-status.enum";
 
 export class CreateApplicationDto {
   @IsMongoId()
