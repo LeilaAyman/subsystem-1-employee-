@@ -7,6 +7,7 @@ import { Position, PositionDocument } from './models/position.schema';
 import { StructureChangeRequest, StructureChangeRequestDocument } from './models/structure-change-request.schema';
 import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
 import { NotificationLogService } from '../time-management/services/notification-log.service';
+import { CreateDepartmentDto } from './dtos/create-department.dto';
 
 @Injectable()
 export class OrganizationStructureService {
@@ -54,9 +55,9 @@ export class OrganizationStructureService {
   // ======================
   // 📌 CREATE DEPARTMENT
   // ======================
-  async createDepartment(dto: any) {
-    return this.departmentModel.create(dto);
-  }
+ async createDepartment(dto: CreateDepartmentDto) {
+  return this.departmentModel.create(dto);
+}
 
   // ===========================
   // 📌 GET DEPARTMENT BY ID
