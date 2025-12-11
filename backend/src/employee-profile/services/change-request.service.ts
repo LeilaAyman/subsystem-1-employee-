@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
@@ -7,7 +7,6 @@ import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from '../dto/process-change-request.dto';
 import { ProfileChangeStatus, SystemRole } from '../enums/employee-profile.enums';
 import { NotificationLogService } from '../../time-management/services/notification-log.service';
-import { OrganizationStructureService } from '../../organization-structure/organization-structure.service';
 
 @Injectable()
 export class ChangeRequestService {
@@ -17,14 +16,12 @@ export class ChangeRequestService {
     @InjectModel(EmployeeProfileChangeRequest.name)
     private changeRequestModel: Model<EmployeeProfileChangeRequest>,
     private notificationLogService: NotificationLogService,
-    @Inject(forwardRef(() => OrganizationStructureService))
-    private organizationStructureService: OrganizationStructureService,
   ) {}
 
   // Create a change request (US-E6-02, US-E2-06)
   async createChangeRequest(
     employeeId: string,
-    _userId: string, // Not used - schema simplified
+    userId: string,
     createDto: CreateChangeRequestDto,
   ): Promise<EmployeeProfileChangeRequest> {
     // Generate unique request ID
@@ -38,9 +35,11 @@ export class ChangeRequestService {
       requestId,
       requestDescription,
       employeeProfileId: employeeId,
+      requestedBy: userId,
       requestedChanges: createDto.requestedChanges,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,
+      requestDate: new Date(),
     });
 
     const savedRequest = await newRequest.save();
@@ -59,7 +58,7 @@ export class ChangeRequestService {
   async getMyChangeRequests(employeeId: string): Promise<EmployeeProfileChangeRequest[]> {
     return await this.changeRequestModel
       .find({ employeeProfileId: employeeId })
-      .sort({ submittedAt: -1 })
+      .sort({ requestDate: -1 })
       .exec();
   }
 
@@ -68,7 +67,8 @@ export class ChangeRequestService {
     return await this.changeRequestModel
       .find({ status: ProfileChangeStatus.PENDING })
       .populate('employeeProfileId')
-      .sort({ submittedAt: -1 })
+      .populate('requestedBy')
+      .sort({ requestDate: -1 })
       .exec();
   }
 
@@ -77,6 +77,8 @@ export class ChangeRequestService {
     const request = await this.changeRequestModel
       .findById(requestId)
       .populate('employeeProfileId')
+      .populate('requestedBy')
+      .populate('reviewedBy')
       .exec();
 
     if (!request) {
@@ -95,7 +97,7 @@ export class ChangeRequestService {
   ): Promise<EmployeeProfileChangeRequest> {
     // Verify user has permission
     if (
-      ![SystemRole.HR_ADMIN, SystemRole.HR_MANAGER].includes(
+      ![SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN].includes(
         userRole as SystemRole,
       )
     ) {
@@ -116,48 +118,12 @@ export class ChangeRequestService {
     request.status = processDto.approved
       ? ProfileChangeStatus.APPROVED
       : ProfileChangeStatus.REJECTED;
-    request.processedAt = new Date();
+    request.reviewedBy = new Types.ObjectId(userId);
+    request.reviewDate = new Date();
+    request.reviewComments = processDto.comments;
 
     // If approved, apply changes to employee profile
     if (processDto.approved) {
-      // Check if change request involves Position or Department (Dependency 13)
-      const involvesOrgStructure =
-        request.requestedChanges?.['primaryPositionId'] ||
-        request.requestedChanges?.['primaryDepartmentId'];
-
-      if (involvesOrgStructure) {
-        // INTEGRATION: Validate Position/Department changes with Org Structure Module
-        console.log('[INTEGRATION] Position/Department change detected. Validating with Org Structure...');
-
-        // Validate position exists and is valid
-        if (request.requestedChanges?.['primaryPositionId']) {
-          try {
-            await this.organizationStructureService.getPositionById(
-              request.requestedChanges['primaryPositionId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid position ID: ${request.requestedChanges['primaryPositionId']}. Position does not exist.`
-            );
-          }
-        }
-
-        // Validate department exists and is active
-        if (request.requestedChanges?.['primaryDepartmentId']) {
-          try {
-            await this.organizationStructureService.getDepartmentById(
-              request.requestedChanges['primaryDepartmentId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid department ID: ${request.requestedChanges['primaryDepartmentId']}. Department does not exist.`
-            );
-          }
-        }
-
-        console.log('[INTEGRATION] Position/Department validation successful.');
-      }
-
       await this.employeeProfileModel.findByIdAndUpdate(
         request.employeeProfileId,
         {
