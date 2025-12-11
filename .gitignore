@@ -2,7 +2,6 @@
 /dist
 /node_modules/
 /build
-
 # Logs
 logs
 *.log
@@ -49,7 +48,6 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-<<<<<<< HEAD
 # Dependencies
 node_modules/
 /node_modules/
@@ -63,7 +61,3 @@ backend/dist/
 frontend/dist/
 
 .env
-=======
-# File uploads
-/uploads
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2
