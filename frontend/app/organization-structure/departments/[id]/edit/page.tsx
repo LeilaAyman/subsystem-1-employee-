@@ -88,7 +88,7 @@ export default function EditDepartmentPage() {
       {error && <p className="text-red-600 mb-3">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        
+
         <div>
           <label className="block mb-1">Name</label>
           <input

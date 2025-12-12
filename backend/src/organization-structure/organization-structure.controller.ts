@@ -21,6 +21,9 @@ import { SystemRole } from '../employee-profile/enums/employee-profile.enums';
 import { CreateDepartmentDto } from './dtos/create-department.dto';
 import { UpdateDepartmentDto } from './dtos/update-department.dto';
 
+// Position DTOs
+import { CreatePositionDto } from './dtos/create-position.dto';
+
 @Controller('organization-structure')
 @UseGuards(AuthGuard, RolesGuard)
 export class OrganizationStructureController {
@@ -72,7 +75,7 @@ export class OrganizationStructureController {
 
   @Post('positions')
   @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)// added the HRAdmin engy
-  createPosition(@Body() dto: any) {
+  createPosition(@Body() dto: CreatePositionDto) {
     return this.organizationStructureService.createPosition(dto);
   }
 

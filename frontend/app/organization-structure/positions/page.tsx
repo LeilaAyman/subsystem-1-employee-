@@ -61,7 +61,7 @@ export default function PositionsPage() {
             {positions.map((pos: any) => (
               <tr key={pos._id}>
                 <td>{pos.title}</td>
-                <td>{pos.department?.name || "—"}</td>
+                <td>{pos.departmentId?.name || "—"}</td>
                 <td>{pos.isActive ? "Active" : "Inactive"}</td>
 
                 <td>

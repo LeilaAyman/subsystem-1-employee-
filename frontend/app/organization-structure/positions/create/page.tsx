@@ -55,7 +55,6 @@ export default function CreatePositionPage() {
         title: form.title,
         description: form.description || "",
         departmentId: form.departmentId,
-        isActive: form.status === "Active", // convert to boolean
       };
 
       await axiosInstance.post("/organization-structure/positions", payload);
