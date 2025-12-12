@@ -17,7 +17,7 @@ export default function HomePage() {
 
   const fetchUser = async () => {
     try {
-      const response = await axiosInstance.get("/employee-profile/me");
+      const response = await axiosInstance.get("/auth/me");
       setUser(response.data);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -148,8 +148,8 @@ export default function HomePage() {
             <div>
               <span className="text-neutral-400">Roles:</span>
               <span className="text-white ml-2">
-                {user?.systemRoles && user.systemRoles.length > 0
-                  ? user.systemRoles
+                {user?.roles && user.roles.length > 0
+                  ? user.roles
                       .map((r: any) => r.roles || r.roleName || r)
                       .flat()
                       .join(", ")
