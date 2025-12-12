@@ -3,6 +3,7 @@
 import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";//engy added this so it navigates to /dep
 
 export default function HomePage() {
   const { user, logout } = useAuth();
@@ -118,6 +119,16 @@ export default function HomePage() {
               description="Track goals and reviews"
               icon="📈"
             />
+             {/* ⭐ NEW — Organization Structure (Departments) engy*/} 
+  <Link href="/organization-structure">
+    <div>
+      <DashboardCard
+        title="Organization Structure"
+        description="Manage departments and positions"
+        icon="🏛️"
+      />
+    </div>
+  </Link>
           </div>
 
           {/* User Info */}
