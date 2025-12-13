@@ -90,6 +90,7 @@ export default function EditPositionPage() {
     }
   };
 
+
   if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
 
   return (
@@ -165,7 +166,9 @@ export default function EditPositionPage() {
           }}
         >
           {saving ? "Saving..." : "Update Position"}
+        
         </button>
+      
       </form>
     </div>
   );

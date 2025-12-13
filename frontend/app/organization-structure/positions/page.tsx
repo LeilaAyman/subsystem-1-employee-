@@ -23,6 +23,23 @@ export default function PositionsPage() {
       setLoading(false);
     }
   };
+  // 🔥 ACTIVATE / DEACTIVATE POSITION
+  const togglePositionStatus = async (id: string, isActive: boolean) => {
+    const action = isActive ? "deactivate" : "activate";
+
+    const confirmed = confirm(`Are you sure you want to ${action} this position?`);
+    if (!confirmed) return;
+
+    try {
+      await axiosInstance.patch(
+        `/organization-structure/positions/${id}/delimit`
+      );
+      fetchPositions(); // Refresh list
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || `Failed to ${action} position`);
+    }
+  }
 
   useEffect(() => {
     fetchPositions();
@@ -70,6 +87,14 @@ export default function PositionsPage() {
                   >
                     <button>Edit</button>
                   </Link>
+                    {/* ACTIVATE / DEACTIVATE BUTTON */}
+                  <button
+  onClick={() => togglePositionStatus(pos._id)}
+  style={{ marginLeft: 10, color: "red" }}
+>
+  Deactivate
+</button>
+
                 </td>
               </tr>
             ))}
