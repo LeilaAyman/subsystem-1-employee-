@@ -298,7 +298,7 @@ export class OrganizationStructureService {
     const departments = await this.departmentModel.find({ isActive: true }).exec();
     const positions = await this.positionModel.find({ isActive: true })
       .populate('departmentId')
-      .populate('reportsToPositionId')
+      //.populate('reportsToPositionId')
       .exec();
 
     return {

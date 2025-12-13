@@ -19,6 +19,17 @@ export default function OrgStructurePage() {
               <Link href="/organization-structure/change-requests">
           <button>View Change Requests</button>
         </Link>
+              {/* ✅ NEW: HIERARCHY BUTTON */}
+        <Link href="/organization-structure/hierarchy">
+          <button>
+            View Hierarchy
+          </button>
+        </Link>
+      <Link href="/organization-structure/my-team">
+  <button style={{ marginLeft: 20 }}>
+    View My Team
+  </button>
+</Link>
       </div>
     </div>
   );

@@ -155,7 +155,7 @@ delimitPosition(@Param('id') id: string) {
   // ======================
 
   @Get('hierarchy/organization')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE) // needed to add employee
   getOrganizationHierarchy() {
     return this.organizationStructureService.getOrganizationHierarchy();
   }
@@ -167,7 +167,7 @@ delimitPosition(@Param('id') id: string) {
   }
 
   @Get('hierarchy/my-team')
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // added hr amanager THE FRADMIN IS A TEMP FOR TESTING BY ENGY
   getMyTeamHierarchy(@CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.getMyTeamHierarchy(user.employeeId);
   }
