@@ -32,47 +32,78 @@ export default function OrganizationHierarchyPage() {
     fetchHierarchy();
   }, []);
 
-  if (loading) return <p style={{ padding: 20 }}>Loading organization hierarchy...</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <p className="text-gray-700 dark:text-gray-300">
+          Loading organization hierarchy...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Organization Hierarchy</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Organization Hierarchy
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            View departments and their positions
+          </p>
+        </div>
 
-      {departments.length === 0 ? (
-        <p>No departments found.</p>
-      ) : (
-        departments.map((dept: any) => {
-          const deptPositions = positions.filter(
-            (pos: any) => pos.departmentId?._id === dept._id
-          );
+        {error && (
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            {error}
+          </p>
+        )}
 
-          return (
-            <div key={dept._id} style={{ marginTop: 30 }}>
-              {/* DEPARTMENT NAME */}
-              <h2 style={{ marginBottom: 10 }}>
-                📁 {dept.name}
-              </h2>
+        {/* Departments */}
+        {departments.length === 0 ? (
+          <p className="text-gray-700 dark:text-gray-300">
+            No departments found.
+          </p>
+        ) : (
+          <div className="space-y-6">
+            {departments.map((dept: any) => {
+              const deptPositions = positions.filter(
+                (pos: any) => pos.departmentId?._id === dept._id
+              );
 
-              {/* POSITIONS UNDER DEPARTMENT */}
-              {deptPositions.length === 0 ? (
-                <p style={{ marginLeft: 20, fontStyle: "italic" }}>
-                  No positions in this department
-                </p>
-              ) : (
-                <ul style={{ marginLeft: 30 }}>
-                  {deptPositions.map((pos: any) => (
-                    <li key={pos._id}>
-                      {pos.title}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        })
-      )}
+              return (
+                <div
+                  key={dept._id}
+                  className="bg-white dark:bg-gray-800 shadow rounded-lg p-6"
+                >
+                  {/* Department */}
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    📁 {dept.name}
+                  </h2>
+
+                  {/* Positions */}
+                  {deptPositions.length === 0 ? (
+                    <p className="text-gray-500 dark:text-gray-400 italic ml-4">
+                      No positions in this department
+                    </p>
+                  ) : (
+                    <ul className="ml-6 space-y-1 list-disc text-gray-700 dark:text-gray-300">
+                      {deptPositions.map((pos: any) => (
+                        <li key={pos._id}>
+                          {pos.title}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
