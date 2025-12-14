@@ -94,11 +94,27 @@ export class EmployeeCrudService {
       .populate('accessProfileId')
       .populate('primaryDepartmentId')
       .populate('primaryPositionId')
-      .populate('payGradeId')
       .exec();
 
+    // Manually populate payGradeId only for valid ObjectIds
+    const populatedEmployees = await Promise.all(
+      employees.map(async (emp) => {
+        const empObj = emp.toObject();
+
+        // Only populate payGradeId if it's a valid ObjectId
+        if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+          const populated = await this.employeeProfileModel
+            .findById(emp._id)
+            .populate('payGradeId')
+            .exec();
+          return populated || emp;
+        }
+        return emp;
+      })
+    );
+
     // Map employees to include roles and properly formatted data
-    return employees.map(emp => {
+    return populatedEmployees.map(emp => {
       const empObj = emp.toObject();
       const roles = (empObj.accessProfileId as any)?.roles || [];
       const payGrade = (empObj.payGradeId as any)?.grade || null;
@@ -114,25 +130,40 @@ export class EmployeeCrudService {
 
   // Get an employee profile by ID
   async findById(id: string): Promise<any> {
-    const employee = await this.employeeProfileModel
+    let employee = await this.employeeProfileModel
       .findById(id)
       .populate('accessProfileId')
       .populate('primaryDepartmentId')
       .populate('primaryPositionId')
-      .populate('payGradeId')
       .exec();
 
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
 
+    // Only populate payGradeId if it's a valid ObjectId
     const empObj = employee.toObject();
-    const roles = (empObj.accessProfileId as any)?.roles || [];
-    const payGrade = (empObj.payGradeId as any)?.grade || null;
+    if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+      const populatedEmployee = await this.employeeProfileModel
+        .findById(id)
+        .populate('accessProfileId')
+        .populate('primaryDepartmentId')
+        .populate('primaryPositionId')
+        .populate('payGradeId')
+        .exec();
+
+      if (populatedEmployee) {
+        employee = populatedEmployee;
+      }
+    }
+
+    const finalEmpObj = employee.toObject();
+    const roles = (finalEmpObj.accessProfileId as any)?.roles || [];
+    const payGrade = (finalEmpObj.payGradeId as any)?.grade || null;
 
     return {
-      ...empObj,
-      email: empObj.workEmail, // Add email field for frontend compatibility
+      ...finalEmpObj,
+      email: finalEmpObj.workEmail, // Add email field for frontend compatibility
       roles, // Add roles at top level
       payGrade, // Add payGrade name for display
     };
