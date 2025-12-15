@@ -140,8 +140,16 @@ activatePosition(@Param('id') id: string) {
     return this.organizationStructureService.submitChangeRequest(dto, user.employeeId);
   }
 
+  // ⚠️ IMPORTANT: Specific routes MUST come before parameterized routes
+
+  @Get('change-requests/my-requests')
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // Managers can view their own requests
+  getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
+    return this.organizationStructureService.getMyChangeRequests(user.employeeId);
+  }
+
   @Get('change-requests')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can view all organizational structure change requests (REQ-OSM-04)
   getAllChangeRequests() {
     return this.organizationStructureService.getAllChangeRequests();
   }

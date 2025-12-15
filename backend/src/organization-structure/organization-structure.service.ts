@@ -211,34 +211,74 @@ async activatePosition(id: string) {
   // 📌 SUBMIT CHANGE REQUEST
   // ======================
   async submitChangeRequest(dto: any, requestedBy: string) {
-    const changeRequest = await this.changeRequestModel.create({
-      ...dto,
-      requestedByEmployeeId: new Types.ObjectId(requestedBy),
-      status: 'SUBMITTED', //fixed 
-      submittedAt: new Date(),
-    });
+    try {
+      console.log('📝 Submitting change request:', { dto, requestedBy });
 
-    // Send notification to System Admin (REQ-OSM-11)
-    const systemAdmins = await this.employeeProfileModel.find({
-      systemRoles: { $in: ['System Admin'] }
-    }).exec();
+      // Generate unique request number
+      const requestNumber = `CR-${Date.now()}-${requestedBy.slice(-6)}`;
 
-    for (const admin of systemAdmins) {
-      await this.notificationLogService.sendNotification({
-        to: new Types.ObjectId(admin._id.toString()),
-        type: 'Structure Change Request Submitted',
-        message: `A new organizational structure change request has been submitted. Please review and approve.`,
+      // Create change request with explicit fields (don't spread dto to avoid _id conflicts)
+      const changeRequest = await this.changeRequestModel.create({
+        requestNumber,
+        requestedByEmployeeId: new Types.ObjectId(requestedBy),
+        requestType: dto.requestType,
+        targetDepartmentId: dto.targetDepartmentId ? new Types.ObjectId(dto.targetDepartmentId) : undefined,
+        targetPositionId: dto.targetPositionId ? new Types.ObjectId(dto.targetPositionId) : undefined,
+        details: dto.details,
+        reason: dto.reason,
+        status: 'SUBMITTED',
+        submittedAt: new Date(),
       });
-    }
 
-    return changeRequest;
+      console.log('✅ Change request created:', changeRequest._id);
+
+      // Send notification to System Admin (REQ-OSM-11)
+      try {
+        const systemAdmins = await this.employeeProfileModel.find({
+          systemRoles: { $in: ['System Admin'] }
+        }).exec();
+
+        console.log(`📧 Sending notifications to ${systemAdmins.length} admins`);
+
+        for (const admin of systemAdmins) {
+          await this.notificationLogService.sendNotification({
+            to: new Types.ObjectId(admin._id.toString()),
+            type: 'Structure Change Request Submitted',
+            message: `A new organizational structure change request has been submitted. Please review and approve.`,
+          });
+        }
+      } catch (notifError) {
+        console.error('⚠️ Notification failed (non-critical):', notifError.message);
+        // Don't fail the request if notification fails
+      }
+
+      return changeRequest;
+    } catch (error) {
+      console.error('❌ submitChangeRequest error:', error);
+      throw error;
+    }
   }
 
   // ======================
-  // 📌 GET ALL CHANGE REQUESTS
+  // 📌 GET ALL CHANGE REQUESTS (Admin only)
   // ======================
   async getAllChangeRequests() {
-    return this.changeRequestModel.find().exec();
+    return this.changeRequestModel
+      .find()
+      .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
+      .sort({ submittedAt: -1 })
+      .exec();
+  }
+
+  // ======================
+  // 📌 GET MY CHANGE REQUESTS (Manager)
+  // ======================
+  async getMyChangeRequests(employeeId: string) {
+    return this.changeRequestModel
+      .find({ requestedByEmployeeId: new Types.ObjectId(employeeId) })
+      .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
+      .sort({ submittedAt: -1 })
+      .exec();
   }
 
   // ======================

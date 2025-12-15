@@ -49,7 +49,7 @@ export default function OrgStructurePage() {
           <Link href="/organization-structure/change-requests">
             <DashboardCard
               title="Change Requests"
-              description="Review and approve structure change requests"
+              description="Submit, review and approve structure change requests"
               icon="📝"
             />
           </Link>
