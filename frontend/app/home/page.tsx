@@ -40,7 +40,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300">
-                Welcome, {user.name || user.email}
+                Welcome, {user.firstName || user.email}
               </span>
               {isHRAdmin && (
                 <button
