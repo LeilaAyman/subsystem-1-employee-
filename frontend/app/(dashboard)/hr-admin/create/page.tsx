@@ -17,16 +17,25 @@ export default function CreateEmployeePage() {
     lastName: "",
     email: "",
     phone: "",
-    address: "",
+    address: {
+      streetAddress: "",
+      city: "",
+      country: "",
+    },
     dateOfBirth: "",
     gender: "",
     maritalStatus: "",
     nationalId: "",
-    hireDate: "",
+    dateOfHire: "",
     status: "ACTIVE",
     payGrade: "",
     password: "",
+    role: "department employee", // Single role
   });
+
+  const handleRoleChange = (role: string) => {
+    setFormData({ ...formData, role });
+  };
 
   useEffect(() => {
     checkAccess();
@@ -198,9 +207,8 @@ export default function CreateEmployeePage() {
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
               </select>
             </div>
             <div>
@@ -215,10 +223,10 @@ export default function CreateEmployeePage() {
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-                <option value="Divorced">Divorced</option>
-                <option value="Widowed">Widowed</option>
+                <option value="SINGLE">Single</option>
+                <option value="MARRIED">Married</option>
+                <option value="DIVORCED">Divorced</option>
+                <option value="WIDOWED">Widowed</option>
               </select>
             </div>
             <div>
@@ -264,14 +272,45 @@ export default function CreateEmployeePage() {
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="text-sm text-neutral-400 block mb-1">Address</label>
-              <textarea
-                value={formData.address}
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">Street Address</label>
+              <input
+                type="text"
+                value={formData.address.streetAddress}
                 onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
+                  setFormData({
+                    ...formData,
+                    address: { ...formData.address, streetAddress: e.target.value },
+                  })
                 }
-                rows={3}
+                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">City</label>
+              <input
+                type="text"
+                value={formData.address.city}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    address: { ...formData.address, city: e.target.value },
+                  })
+                }
+                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">Country</label>
+              <input
+                type="text"
+                value={formData.address.country}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    address: { ...formData.address, country: e.target.value },
+                  })
+                }
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
@@ -290,9 +329,9 @@ export default function CreateEmployeePage() {
               </label>
               <input
                 type="date"
-                value={formData.hireDate}
+                value={formData.dateOfHire}
                 onChange={(e) =>
-                  setFormData({ ...formData, hireDate: e.target.value })
+                  setFormData({ ...formData, dateOfHire: e.target.value })
                 }
                 required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
@@ -326,6 +365,51 @@ export default function CreateEmployeePage() {
                 placeholder="e.g., G5, L3"
               />
             </div>
+          </div>
+        </div>
+
+        {/* System Role */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4 text-white">System Role *</h2>
+          <p className="text-neutral-400 text-sm mb-4">
+            Select one role for this employee.
+          </p>
+
+          <div className="space-y-3">
+            {[
+              { value: "department employee", label: "Department Employee" },
+              { value: "department head", label: "Department Head" },
+              { value: "DEPARTMENT_MANAGER", label: "Department Manager" },
+              { value: "HR Admin", label: "HR Admin" },
+              { value: "HR Manager", label: "HR Manager" },
+              { value: "HR Employee", label: "HR Employee" },
+              { value: "Payroll Specialist", label: "Payroll Specialist" },
+              { value: "Payroll Manager", label: "Payroll Manager" },
+              { value: "System Admin", label: "System Admin" },
+              { value: "Legal & Policy Admin", label: "Legal & Policy Admin" },
+              { value: "Recruiter", label: "Recruiter" },
+              { value: "Finance Staff", label: "Finance Staff" },
+            ].map((roleOption) => (
+              <label
+                key={roleOption.value}
+                className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-800 p-2 rounded"
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  checked={formData.role === roleOption.value}
+                  onChange={() => handleRoleChange(roleOption.value)}
+                  className="w-4 h-4 border-neutral-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-neutral-900"
+                />
+                <span className="text-white">{roleOption.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-4 p-3 bg-neutral-800 rounded">
+            <p className="text-sm text-neutral-400">
+              Selected role: {formData.role}
+            </p>
           </div>
         </div>
 

@@ -10,9 +10,9 @@ export default function HomePage() {
   const router = useRouter();
   const [showCreateUser, setShowCreateUser] = useState(false);
 
-  // Check if user is HR Admin (case-insensitive check)
+  // Check if user is HR Admin
   const isHRAdmin = user?.roles?.some(role =>
-    role.toLowerCase() === 'hr admin' || role.toLowerCase() === 'system admin'
+    role === 'HR Admin' || role === 'System Admin'
   );
 
   const handleLogout = async () => {
@@ -79,11 +79,13 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Employee Profile */}
-            <DashboardCard
-              title="Employee Profile"
-              description="View and manage employee information"
-              icon="👤"
-            />
+            <Link href="/profile">
+              <DashboardCard
+                title="Employee Profile"
+                description="View and manage employee information"
+                icon="👤"
+              />
+            </Link>
 
             {/* Recruitment */}
             <DashboardCard
@@ -130,6 +132,17 @@ export default function HomePage() {
                 icon="🏛️"
               />
             </Link>
+
+            {/* Change Requests - Only for HR Admin */}
+            {isHRAdmin && (
+              <Link href="/change-requests">
+                <DashboardCard
+                  title="Change Requests"
+                  description="Review and approve employee changes"
+                  icon="📝"
+                />
+              </Link>
+            )}
           </div>
 
           {/* User Info */}
@@ -138,7 +151,7 @@ export default function HomePage() {
               Your Information
             </h3>
             <div className="space-y-2 text-gray-700 dark:text-gray-300">
-              <p><strong>Role:</strong> {user.role}</p>
+              <p><strong>Roles:</strong> {user.roles && user.roles.length > 0 ? user.roles.join(", ") : "N/A"}</p>
               <p><strong>Email:</strong> {user.email}</p>
               {user.age && <p><strong>Age:</strong> {user.age}</p>}
             </div>
@@ -158,10 +171,11 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     workEmail: '',
     password: '',
     firstName: '',
+    middleName: '',
     lastName: '',
     nationalId: '',
     dateOfHire: '',
-    roles: [] as string[],
+    role: 'department employee',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -196,16 +210,24 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const toggleRole = (role: string) => {
-    setFormData(prev => ({
-      ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter(r => r !== role)
-        : [...prev.roles, role]
-    }));
+  const handleRoleChange = (role: string) => {
+    setFormData({ ...formData, role });
   };
 
-  const availableRoles = ['hr admin', 'system admin', 'department employee', 'manager'];
+  const availableRoles = [
+    'department employee',
+    'department head',
+    'DEPARTMENT_MANAGER',
+    'HR Admin',
+    'HR Manager',
+    'HR Employee',
+    'Payroll Specialist',
+    'Payroll Manager',
+    'System Admin',
+    'Legal & Policy Admin',
+    'Recruiter',
+    'Finance Staff',
+  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -283,6 +305,18 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Middle Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.middleName}
+                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   National ID *
                 </label>
                 <input
@@ -307,6 +341,110 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Gender
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Marital Status
+                </label>
+                <select
+                  value={formData.maritalStatus}
+                  onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select</option>
+                  <option value="SINGLE">Single</option>
+                  <option value="MARRIED">Married</option>
+                  <option value="DIVORCED">Divorced</option>
+                  <option value="WIDOWED">Widowed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Mobile Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.mobilePhone}
+                  onChange={(e) => setFormData({ ...formData, mobilePhone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Personal Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.personalEmail}
+                  onChange={(e) => setFormData({ ...formData, personalEmail: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Street Address
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.streetAddress}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, streetAddress: e.target.value }})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.city}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value }})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.country}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value }})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Password *
@@ -324,18 +462,19 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Roles (select at least one)
+                Role (select one)
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {availableRoles.map((role) => (
-                  <label key={role} className="flex items-center space-x-2 cursor-pointer">
+                {availableRoles.map((roleOption) => (
+                  <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
                     <input
-                      type="checkbox"
-                      checked={formData.roles.includes(role)}
-                      onChange={() => toggleRole(role)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      type="radio"
+                      name="role"
+                      checked={formData.role === roleOption}
+                      onChange={() => handleRoleChange(roleOption)}
+                      className="border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{role}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{roleOption}</span>
                   </label>
                 ))}
               </div>
@@ -350,7 +489,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"
-                disabled={loading || formData.roles.length === 0}
+                disabled={loading}
                 className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {loading ? 'Creating...' : 'Create User'}
