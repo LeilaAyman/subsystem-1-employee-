@@ -1,4 +1,3 @@
-// app/performance/layout.tsx
 "use client";
 
 import { ReactNode, useMemo, useState } from "react";
@@ -40,8 +39,8 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
       </div>
     );
   }
@@ -55,12 +54,20 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     const employee = isEmployee(user);
 
     // HR nav (HR Employee/Manager)
-    if (hrEmployee || hrManager) {
+    if (hrManager) {
       return [
         { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
         { href: "/performance/templates", label: "Templates", icon: <FileText size={20} /> },
         { href: "/performance/cycles", label: "Cycles", icon: <Users size={20} /> },
         { href: "/performance/adminDisputes", label: "Disputes", icon: <AlertCircle size={20} /> },
+        { href: "/performance/analytics", label: "Analytics", icon: <BarChart size={20} /> },
+      ];
+    }
+
+    if (hrEmployee) {
+      return [
+        { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { href: "/performance/cycles", label: "Cycles", icon: <Users size={20} /> },
         { href: "/performance/analytics", label: "Analytics", icon: <BarChart size={20} /> },
       ];
     }
@@ -102,26 +109,31 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-white/90 backdrop-blur border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden mr-3">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden mr-3 text-slate-600 hover:text-slate-900"
+              >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <Link href="/performance" className="flex items-center space-x-2">
-                <div className="bg-blue-600 p-2 rounded-md">
+                <div className="bg-gradient-to-tr from-indigo-600 to-sky-500 p-2 rounded-lg shadow-sm">
                   <FileText className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-800 hidden sm:inline">Performance</span>
+                <span className="text-xl font-semibold text-slate-900 hidden sm:inline">
+                  Performance
+                </span>
               </Link>
             </div>
 
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
               <Link
                 href="/home"
-                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
               >
                 <ArrowLeft size={16} />
                 <span>Back to Home</span>
@@ -131,8 +143,10 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.href) ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {item.icon}
@@ -141,17 +155,20 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
               ))}
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <div className="hidden md:flex items-center space-x-2 text-sm">
-                <div className="bg-gray-100 p-2 rounded-full">
-                  <UserIcon size={16} className="text-gray-600" />
+                <div className="bg-slate-100 p-2 rounded-full">
+                  <UserIcon size={16} className="text-slate-600" />
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{userName}</p>
-                  <p className="text-gray-500 text-xs">{userRoleLabel}</p>
+                  <p className="font-medium text-slate-900">{userName}</p>
+                  <p className="text-slate-500 text-xs">{userRoleLabel}</p>
                 </div>
               </div>
-              <button onClick={handleLogout} className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 text-sm">
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 text-slate-600 hover:text-rose-600 text-sm font-medium px-2 py-1 rounded-full hover:bg-rose-50 transition"
+              >
                 <LogOut size={16} />
                 <span className="hidden md:inline">Logout</span>
               </button>
@@ -159,12 +176,12 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden border-t py-3">
+            <div className="md:hidden border-t border-slate-200 py-3">
               <div className="flex flex-col space-y-2">
                 <Link
                   href="/home"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-600 hover:bg-gray-50"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                 >
                   <ArrowLeft size={16} />
                   <span>Back to Home</span>
@@ -175,8 +192,10 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md ${
-                      isActive(item.href) ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm ${
+                      isActive(item.href)
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
                     {item.icon}
@@ -184,14 +203,14 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                   </Link>
                 ))}
 
-                <div className="flex items-center justify-between px-3 py-2 border-t mt-2">
+                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 mt-2">
                   <div className="flex items-center space-x-2">
-                    <div className="bg-gray-100 p-2 rounded-full">
-                      <UserIcon size={16} className="text-gray-600" />
+                    <div className="bg-slate-100 p-2 rounded-full">
+                      <UserIcon size={16} className="text-slate-600" />
                     </div>
                     <div>
-                      <p className="font-medium">{userName}</p>
-                      <p className="text-gray-500 text-xs">{userRoleLabel}</p>
+                      <p className="font-medium text-slate-900">{userName}</p>
+                      <p className="text-slate-500 text-xs">{userRoleLabel}</p>
                     </div>
                   </div>
                 </div>
@@ -201,7 +220,7 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
     </div>
   );
 }
