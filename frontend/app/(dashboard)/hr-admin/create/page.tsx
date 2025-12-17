@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
-import { isSystemAdmin } from "@/app/utils/roleCheck";
+import { isHRAdmin } from "@/app/utils/roleCheck";
 
 interface Department {
   _id: string;
@@ -78,7 +78,7 @@ export default function CreateEmployeePage() {
       const response = await axiosInstance.get("/employee-profile/me");
 
       // Use flexible role checking
-      if (!isSystemAdmin(response.data)) {
+      if (!isHRAdmin(response.data)) {
         alert("Access Denied: You don't have permission to access this page");
         router.push("/profile");
         return;

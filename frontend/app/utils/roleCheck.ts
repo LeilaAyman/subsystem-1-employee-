@@ -169,6 +169,10 @@ export function requiresChangeRequest(user: UserProfile, field: string): boolean
 export function isManager(userProfile: any): boolean {
   return isLineManager(userProfile) || isHRManager(userProfile);
 }
+// HR Admin (explicit role check, kept for backward compatibility)
+export function isHRAdmin(user: UserProfile): boolean {
+  return hasRole(user, ["HR_ADMIN"]) || isSystemAdmin(user);
+}
 
 
 // ============================
