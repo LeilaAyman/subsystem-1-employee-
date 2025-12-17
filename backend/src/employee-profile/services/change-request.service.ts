@@ -63,6 +63,15 @@ export class ChangeRequestService {
       .exec();
   }
 
+  // Get all change requests (BR-22: Audit trail)
+  async getAllChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
+    return await this.changeRequestModel
+      .find()
+      .populate('employeeProfileId')
+      .sort({ submittedAt: -1 })
+      .exec();
+  }
+
   // Get all pending change requests
   async getPendingChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
     return await this.changeRequestModel

@@ -101,12 +101,20 @@ export default function HRAdminPage() {
             Manage employee profiles and master data
           </p>
         </div>
-        <Link
-          href="/hr-admin/create"
-          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition"
-        >
-          Create Employee
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href="/hr-admin/workflow-config"
+            className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition border border-neutral-600"
+          >
+            Workflow Settings
+          </Link>
+          <Link
+            href="/hr-admin/create"
+            className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition"
+          >
+            Create Employee
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
