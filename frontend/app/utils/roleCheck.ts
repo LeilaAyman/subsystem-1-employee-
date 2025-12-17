@@ -1,9 +1,13 @@
 // rolecheck.ts
-// Role + permission utilities aligned to Performance Appraisal flow responsibilities.
+// Unified Role + Permission utilities
+// Covers: Organizational Structure, Profile Editing, Change Requests, Performance Appraisal
 
 type UserProfile = any;
 
-// Normalize role names to handle both "HR Admin" and "HR_ADMIN" formats
+// ============================
+// NORMALIZATION + BASE CHECK
+// ============================
+
 function normalizeRole(role: string): string {
   return String(role || "").toUpperCase().replace(/\s+/g, "_");
 }
@@ -12,137 +16,120 @@ export function hasRole(userProfile: UserProfile, requiredRoles: string[]): bool
   if (!userProfile) return false;
 
   const normalizedRequired = requiredRoles.map(normalizeRole);
-
   const roleMatches = (r: unknown) =>
     typeof r === "string" && normalizedRequired.includes(normalizeRole(r));
 
-  // Method 1: systemRoles array can be: string | { roleName } | { roles: [] }
+  // systemRoles (string | { roleName } | { roles })
   const systemRoles = userProfile.systemRoles;
   if (Array.isArray(systemRoles)) {
     for (const roleObj of systemRoles) {
       if (typeof roleObj === "string" && roleMatches(roleObj)) return true;
-
-      if (roleObj && typeof roleObj === "object") {
-        if (Array.isArray(roleObj.roles) && roleObj.roles.some(roleMatches)) return true;
-        if (typeof roleObj.roleName === "string" && roleMatches(roleObj.roleName)) return true;
-      }
+      if (roleObj?.roles?.some(roleMatches)) return true;
+      if (roleObj?.roleName && roleMatches(roleObj.roleName)) return true;
     }
   }
 
-  // Method 2: accessProfileId populated object: { roles: [] }
-  const accessProfile = userProfile.accessProfileId;
-  if (accessProfile && Array.isArray(accessProfile.roles)) {
-    if (accessProfile.roles.some(roleMatches)) return true;
-  }
+  // accessProfileId.roles
+  if (userProfile.accessProfileId?.roles?.some(roleMatches)) return true;
 
-  // Method 3: direct roles property: []
-  const directRoles = userProfile.roles;
-  if (Array.isArray(directRoles)) {
-    if (directRoles.some(roleMatches)) return true;
-  }
+  // direct roles
+  if (Array.isArray(userProfile.roles) && userProfile.roles.some(roleMatches)) return true;
 
   return false;
 }
 
 // ============================
-// ROLE CHECKS (Appraisal Flow)
+// CORE ROLE DEFINITIONS
 // ============================
 
-// System-level (optional, keep if your app has it)
-export function isSystemAdmin(userProfile: UserProfile): boolean {
-  return hasRole(userProfile, ["SYSTEM_ADMIN"]);
+export function isSystemAdmin(user: UserProfile): boolean {
+  return hasRole(user, ["SYSTEM_ADMIN"]);
 }
 
-// HR Manager: owns templates, fairness, dashboards, dispute resolution, final authority
-export function isHRManager(userProfile: UserProfile): boolean {
-  // Keep HR_ADMIN as a superset if it exists in your org.
-  return hasRole(userProfile, ["HR_MANAGER", "HR_ADMIN"]) || isSystemAdmin(userProfile);
+export function isHRManager(user: UserProfile): boolean {
+  return hasRole(user, ["HR_MANAGER", "HR_ADMIN"]) || isSystemAdmin(user);
 }
 
-// HR Employee: operates cycles, assignments, reminders, publishing step
-export function isHREmployee(userProfile: UserProfile): boolean {
-  return hasRole(userProfile, ["HR_EMPLOYEE"]) || isHRManager(userProfile);
+export function isHREmployee(user: UserProfile): boolean {
+  return hasRole(user, ["HR_EMPLOYEE"]) || isHRManager(user);
 }
 
-// Line Manager / Department Head: completes evaluations for direct reports
-export function isLineManager(userProfile: UserProfile): boolean {
-  return hasRole(userProfile, ["DEPARTMENT_HEAD", "DEPARTMENT_MANAGER"]);
+export function isLineManager(user: UserProfile): boolean {
+  return hasRole(user, ["DEPARTMENT_HEAD", "DEPARTMENT_MANAGER"]);
 }
 
-// Regular employee
-export function isEmployee(userProfile: UserProfile): boolean {
-  // Most systems treat everyone as an employee. Keep your existing enum too.
-  return hasRole(userProfile, ["DEPARTMENT_EMPLOYEE", "EMPLOYEE"]);
+export function isEmployee(user: UserProfile): boolean {
+  return hasRole(user, ["DEPARTMENT_EMPLOYEE", "EMPLOYEE"]);
 }
 
-// Convenience
-export function isAnyManager(userProfile: UserProfile): boolean {
-  return isLineManager(userProfile) || isHRManager(userProfile);
-}
-
-// =====================================
-// PERFORMANCE APPRAISAL PERMISSIONS
-// =====================================
-// These are the only checks your Performance UI should use.
-
-// Step 1: Template Definition (HR Manager)
-export function canManageAppraisalTemplates(userProfile: UserProfile): boolean {
-  return isHRManager(userProfile);
-}
-
-// Step 2: Cycle Creation & Setup (HR Employee / HR Manager)
-export function canCreateAndScheduleCycles(userProfile: UserProfile): boolean {
-  return isHREmployee(userProfile);
-}
-
-// Step 3A: Assignment & Manager Access (HR Employee assigns, Manager views)
-export function canAssignAppraisalsInBulk(userProfile: UserProfile): boolean {
-  return isHREmployee(userProfile);
-}
-
-export function canViewAssignedAppraisalsAsManager(userProfile: UserProfile): boolean {
-  return isLineManager(userProfile) || isHRManager(userProfile);
-}
-
-// Step 3B: Manager fills form (Line Manager)
-export function canFillManagerRatings(userProfile: UserProfile): boolean {
-  return isLineManager(userProfile);
-}
-
-// Step 4: HR monitors progress & publishes (HR Employee / HR Manager)
-export function canMonitorAppraisalProgress(userProfile: UserProfile): boolean {
-  return isHREmployee(userProfile);
-}
-
-export function canViewCompletionDashboard(userProfile: UserProfile): boolean {
-  return isHRManager(userProfile);
-}
-
-export function canPublishAppraisalResults(userProfile: UserProfile): boolean {
-  // In your flow HR Employee publishes after manager completes.
-  // Keep HR Manager allowed as well.
-  return isHREmployee(userProfile);
-}
-
-// Step 5: Employee receives rating (Employee)
-export function canViewOwnFinalRating(userProfile: UserProfile): boolean {
-  return true; // Usually everyone can view their own record, enforced by backend ownership.
-}
-
-// Step 6: Employee objects (Employee or HR Employee)
-export function canRaiseAppraisalDispute(userProfile: UserProfile): boolean {
-  return isEmployee(userProfile) || isHREmployee(userProfile);
-}
-
-// Step 7: HR Manager resolves objection (HR Manager)
-export function canResolveAppraisalDispute(userProfile: UserProfile): boolean {
-  return isHRManager(userProfile);
+export function isAnyManager(user: UserProfile): boolean {
+  return isLineManager(user) || isHRManager(user);
 }
 
 // ============================
-// PROFILE EDITING (NON-PERF)
+// PERFORMANCE APPRAISAL
 // ============================
-// Keep this if you still use it elsewhere, but do not mix it with Performance rules.
+
+export function canManageAppraisalTemplates(user: UserProfile): boolean {
+  return isHRManager(user);
+}
+
+export function canCreateAndScheduleCycles(user: UserProfile): boolean {
+  return isHREmployee(user);
+}
+
+export function canAssignAppraisalsInBulk(user: UserProfile): boolean {
+  return isHREmployee(user);
+}
+
+export function canViewAssignedAppraisalsAsManager(user: UserProfile): boolean {
+  return isLineManager(user) || isHRManager(user);
+}
+
+export function canFillManagerRatings(user: UserProfile): boolean {
+  return isLineManager(user);
+}
+
+export function canMonitorAppraisalProgress(user: UserProfile): boolean {
+  return isHREmployee(user);
+}
+
+export function canViewCompletionDashboard(user: UserProfile): boolean {
+  return isHRManager(user);
+}
+
+export function canPublishAppraisalResults(user: UserProfile): boolean {
+  return isHREmployee(user);
+}
+
+export function canRaiseAppraisalDispute(user: UserProfile): boolean {
+  return isEmployee(user) || isHREmployee(user);
+}
+
+export function canResolveAppraisalDispute(user: UserProfile): boolean {
+  return isHRManager(user);
+}
+
+// ============================
+// ORGANIZATIONAL / HR LOGIC
+// (Merged from old file)
+// ============================
+
+export function canViewTeamProfiles(user: UserProfile): boolean {
+  return isLineManager(user) || isHRManager(user);
+}
+
+export function canReviewChangeRequests(user: UserProfile): boolean {
+  return isHRManager(user);
+}
+
+export function canAccessAllEmployees(user: UserProfile): boolean {
+  return isHRManager(user);
+}
+
+// ============================
+// PROFILE EDITING RULES
+// ============================
 
 const NON_CRITICAL_PROFILE_FIELDS = [
   "mobilePhone",
@@ -168,106 +155,33 @@ const CRITICAL_PROFILE_FIELDS = [
   "bankAccountNumber",
 ] as const;
 
-export function canDirectlyEditProfile(userProfile: UserProfile, fieldName: string): boolean {
-  if (isHRManager(userProfile)) return true; // HR Manager/Admin can edit anything
-  if (isEmployee(userProfile)) return (NON_CRITICAL_PROFILE_FIELDS as readonly string[]).includes(fieldName);
+export function canDirectlyEditProfile(user: UserProfile, field: string): boolean {
+  if (isHRManager(user)) return true;
+  if (isEmployee(user)) return NON_CRITICAL_PROFILE_FIELDS.includes(field as any);
   return false;
 }
 
-export function requiresChangeRequest(userProfile: UserProfile, fieldName: string): boolean {
-  if (isHRManager(userProfile)) return false;
-  return (CRITICAL_PROFILE_FIELDS as readonly string[]).includes(fieldName);
+export function requiresChangeRequest(user: UserProfile, field: string): boolean {
+  if (isHRManager(user)) return false;
+  return CRITICAL_PROFILE_FIELDS.includes(field as any);
+}
+// Backward-compatible alias
+export function isManager(userProfile: any): boolean {
+  return isLineManager(userProfile) || isHRManager(userProfile);
 }
 
-  // Department Employees need change request for critical fields
-  return criticalFields.includes(fieldName);
-}
 
-/**
- * Check if user can view team profiles
- * Department Managers can view their direct reports (non-sensitive data)
- */
-export function canViewTeamProfiles(userProfile: any): boolean {
-  return isDepartmentManager(userProfile) || isHRAdmin(userProfile);
-}
+// ============================
+// DEBUG
+// ============================
 
-/**
- * Check if user can review and approve change requests
- * Only HR Admin and HR Manager can do this
- */
-export function canReviewChangeRequests(userProfile: any): boolean {
-  return isHRAdmin(userProfile);
-}
-
-/**
- * Check if user can access all employee profiles (not just their team)
- * Only HR Admin/Manager have this access
- */
-export function canAccessAllEmployees(userProfile: any): boolean {
-  return isHRAdmin(userProfile);
-}
-
-// Regular employee roles (based on your enums)
-export function isRegularEmployee(userProfile: any): boolean {
-  const regularEmployeeRoles = [
-    'DEPARTMENT_EMPLOYEE',
-    'HR_EMPLOYEE', 
-    'PAYROLL_SPECIALIST',
-    'PAYROLL_MANAGER',
-    'LEGAL_POLICY_ADMIN',
-    'RECRUITER',
-    'FINANCE_STAFF',
-    'JOB_CANDIDATE'
-  ];
-  
-  // Check if user has ANY regular employee role
-  const hasRegularRole = hasRole(userProfile, regularEmployeeRoles);
-  
-  // Also check if they don't have admin/manager roles
-  const hasAdminOrManagerRole = isHRAdmin(userProfile) || isManager(userProfile) || isSystemAdmin(userProfile);
-  
-  return hasRegularRole && !hasAdminOrManagerRole;
-}
-
-// Check if user is HR but not a manager
-export function isHROnly(userProfile: any): boolean {
-  const isHR = isHRAdmin(userProfile);
-  const isMgr = isManager(userProfile);
-  const isSysAdmin = isSystemAdmin(userProfile);
-  
-  return isHR && !isMgr && !isSysAdmin;
-}
-
-// Check if user is a manager but not HR
-export function isManagerOnly(userProfile: any): boolean {
-  const isMgr = isManager(userProfile);
-  const isHR = isHRAdmin(userProfile);
-  const isSysAdmin = isSystemAdmin(userProfile);
-  
-  return isMgr && !isHR && !isSysAdmin;
-}
-
-// Check if user is HR and Manager (has both)
-export function isHRAndManager(userProfile: any): boolean {
-  return isHRAdmin(userProfile) && isManager(userProfile);
-}
-
-// Enhanced debug function
-export function debugRoles(userProfile: any): void {
-  console.log('=== ROLE DEBUG INFO ===');
-  console.log('Full profile:', userProfile);
-  console.log('systemRoles:', userProfile?.systemRoles);
-  console.log('accessProfileId:', userProfile?.accessProfileId);
-  console.log('roles:', userProfile?.roles);
-  
-  console.log('\n--- Role Check Results ---');
-  console.log('isHRAdmin:', isHRAdmin(userProfile));
-  console.log('isDepartmentManager:', isDepartmentManager(userProfile));
-  console.log('isDepartmentEmployee:', isDepartmentEmployee(userProfile));
-  console.log('isManager:', isManager(userProfile));
-  console.log('isSystemAdmin:', isSystemAdmin(userProfile));
-  console.log('canViewTeamProfiles:', canViewTeamProfiles(userProfile));
-  console.log('canReviewChangeRequests:', canReviewChangeRequests(userProfile));
-  console.log('canAccessAllEmployees:', canAccessAllEmployees(userProfile));
-  console.log('======================');
+export function debugRoles(user: UserProfile): void {
+  console.log("=== ROLE DEBUG ===");
+  console.log("Roles:", user?.roles || user?.systemRoles);
+  console.log("SystemAdmin:", isSystemAdmin(user));
+  console.log("HRManager:", isHRManager(user));
+  console.log("HREmployee:", isHREmployee(user));
+  console.log("LineManager:", isLineManager(user));
+  console.log("Employee:", isEmployee(user));
+  console.log("=================");
 }
