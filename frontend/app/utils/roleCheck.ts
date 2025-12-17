@@ -179,31 +179,95 @@ export function requiresChangeRequest(userProfile: UserProfile, fieldName: strin
   return (CRITICAL_PROFILE_FIELDS as readonly string[]).includes(fieldName);
 }
 
-// Debug helper (kept)
-export function debugRoles(userProfile: UserProfile): void {
-  console.log("=== ROLE DEBUG INFO ===");
-  console.log("Full profile:", userProfile);
-  console.log("systemRoles:", userProfile?.systemRoles);
-  console.log("accessProfileId:", userProfile?.accessProfileId);
-  console.log("roles:", userProfile?.roles);
+  // Department Employees need change request for critical fields
+  return criticalFields.includes(fieldName);
+}
 
-  console.log("\n--- Role Check Results ---");
-  console.log("isSystemAdmin:", isSystemAdmin(userProfile));
-  console.log("isHRManager:", isHRManager(userProfile));
-  console.log("isHREmployee:", isHREmployee(userProfile));
-  console.log("isLineManager:", isLineManager(userProfile));
-  console.log("isEmployee:", isEmployee(userProfile));
+/**
+ * Check if user can view team profiles
+ * Department Managers can view their direct reports (non-sensitive data)
+ */
+export function canViewTeamProfiles(userProfile: any): boolean {
+  return isDepartmentManager(userProfile) || isHRAdmin(userProfile);
+}
 
-  console.log("\n--- Performance Permissions ---");
-  console.log("canManageAppraisalTemplates:", canManageAppraisalTemplates(userProfile));
-  console.log("canCreateAndScheduleCycles:", canCreateAndScheduleCycles(userProfile));
-  console.log("canAssignAppraisalsInBulk:", canAssignAppraisalsInBulk(userProfile));
-  console.log("canViewAssignedAppraisalsAsManager:", canViewAssignedAppraisalsAsManager(userProfile));
-  console.log("canFillManagerRatings:", canFillManagerRatings(userProfile));
-  console.log("canMonitorAppraisalProgress:", canMonitorAppraisalProgress(userProfile));
-  console.log("canViewCompletionDashboard:", canViewCompletionDashboard(userProfile));
-  console.log("canPublishAppraisalResults:", canPublishAppraisalResults(userProfile));
-  console.log("canRaiseAppraisalDispute:", canRaiseAppraisalDispute(userProfile));
-  console.log("canResolveAppraisalDispute:", canResolveAppraisalDispute(userProfile));
-  console.log("======================");
+/**
+ * Check if user can review and approve change requests
+ * Only HR Admin and HR Manager can do this
+ */
+export function canReviewChangeRequests(userProfile: any): boolean {
+  return isHRAdmin(userProfile);
+}
+
+/**
+ * Check if user can access all employee profiles (not just their team)
+ * Only HR Admin/Manager have this access
+ */
+export function canAccessAllEmployees(userProfile: any): boolean {
+  return isHRAdmin(userProfile);
+}
+
+// Regular employee roles (based on your enums)
+export function isRegularEmployee(userProfile: any): boolean {
+  const regularEmployeeRoles = [
+    'DEPARTMENT_EMPLOYEE',
+    'HR_EMPLOYEE', 
+    'PAYROLL_SPECIALIST',
+    'PAYROLL_MANAGER',
+    'LEGAL_POLICY_ADMIN',
+    'RECRUITER',
+    'FINANCE_STAFF',
+    'JOB_CANDIDATE'
+  ];
+  
+  // Check if user has ANY regular employee role
+  const hasRegularRole = hasRole(userProfile, regularEmployeeRoles);
+  
+  // Also check if they don't have admin/manager roles
+  const hasAdminOrManagerRole = isHRAdmin(userProfile) || isManager(userProfile) || isSystemAdmin(userProfile);
+  
+  return hasRegularRole && !hasAdminOrManagerRole;
+}
+
+// Check if user is HR but not a manager
+export function isHROnly(userProfile: any): boolean {
+  const isHR = isHRAdmin(userProfile);
+  const isMgr = isManager(userProfile);
+  const isSysAdmin = isSystemAdmin(userProfile);
+  
+  return isHR && !isMgr && !isSysAdmin;
+}
+
+// Check if user is a manager but not HR
+export function isManagerOnly(userProfile: any): boolean {
+  const isMgr = isManager(userProfile);
+  const isHR = isHRAdmin(userProfile);
+  const isSysAdmin = isSystemAdmin(userProfile);
+  
+  return isMgr && !isHR && !isSysAdmin;
+}
+
+// Check if user is HR and Manager (has both)
+export function isHRAndManager(userProfile: any): boolean {
+  return isHRAdmin(userProfile) && isManager(userProfile);
+}
+
+// Enhanced debug function
+export function debugRoles(userProfile: any): void {
+  console.log('=== ROLE DEBUG INFO ===');
+  console.log('Full profile:', userProfile);
+  console.log('systemRoles:', userProfile?.systemRoles);
+  console.log('accessProfileId:', userProfile?.accessProfileId);
+  console.log('roles:', userProfile?.roles);
+  
+  console.log('\n--- Role Check Results ---');
+  console.log('isHRAdmin:', isHRAdmin(userProfile));
+  console.log('isDepartmentManager:', isDepartmentManager(userProfile));
+  console.log('isDepartmentEmployee:', isDepartmentEmployee(userProfile));
+  console.log('isManager:', isManager(userProfile));
+  console.log('isSystemAdmin:', isSystemAdmin(userProfile));
+  console.log('canViewTeamProfiles:', canViewTeamProfiles(userProfile));
+  console.log('canReviewChangeRequests:', canReviewChangeRequests(userProfile));
+  console.log('canAccessAllEmployees:', canAccessAllEmployees(userProfile));
+  console.log('======================');
 }
