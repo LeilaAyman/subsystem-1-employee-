@@ -40,18 +40,27 @@ export default function OrganizationHierarchyPage() {
       const isManagerUser = isManager(user);
 
       if (isManagerUser) {
-        // Manager/HR: Fetch full organization structure
+        // Manager/HR: Fetch full organization structure with employees
         const res = await axiosInstance.get("/organization-structure/hierarchy/organization");
         setDepartments(res.data.departments || []);
         setPositions(res.data.positions || []);
+        setEmployees(res.data.employees || []);
 
-        // Fetch employees to populate the org chart
-        try {
-          const empRes = await axiosInstance.get("/employee-profile");
-          setEmployees(empRes.data || []);
-        } catch (empErr: any) {
-          console.warn("Could not fetch all employees, org chart may show vacant positions:", empErr.message);
-          // Continue without employees - positions will show as vacant
+        console.log("📊 Hierarchy data loaded:");
+        console.log("  Departments:", res.data.departments?.length || 0);
+        console.log("  Positions:", res.data.positions?.length || 0);
+        console.log("  Employees:", res.data.employees?.length || 0);
+
+        if (res.data.employees?.length > 0) {
+          console.log("👤 Sample employee:", res.data.employees[0]);
+          console.log("   Employee number:", res.data.employees[0].employeeNumber);
+          console.log("   Primary position:", res.data.employees[0].primaryPositionId);
+        }
+
+        if (res.data.positions?.length > 0) {
+          console.log("📍 Sample position:", res.data.positions[0]);
+          console.log("   Position ID:", res.data.positions[0]._id);
+          console.log("   Position title:", res.data.positions[0].title);
         }
       } else {
         // Regular employee: only see their own structure (BR 41)
@@ -102,9 +111,31 @@ export default function OrganizationHierarchyPage() {
             (pos) => pos._id !== dept.headPositionId
           );
 
-          // Find employees for each position
+          // Find employees for each position using STRICT position matching
+          // ONLY match if employee.primaryPositionId._id === position._id
           const getEmployeeForPosition = (posId: string) => {
-            return employees.find(emp => emp.primaryPositionId?._id === posId || emp.primaryPositionId === posId);
+            const employee = employees.find(emp => {
+              // Handle both populated and unpopulated primaryPositionId
+              const empPosId = emp.primaryPositionId?._id || emp.primaryPositionId;
+              const matches = empPosId === posId;
+
+              if (matches) {
+                console.log(`✅ Matched employee ${emp.employeeNumber} to position ${posId}`);
+              }
+
+              return matches;
+            });
+
+            // Debug logging for vacant positions
+            if (!employee && posId) {
+              console.log(`⚠️ Position ${posId} is VACANT (no employee match)`);
+              console.log(`   Available employees:`, employees.map(e => ({
+                empNum: e.employeeNumber,
+                posId: e.primaryPositionId?._id || e.primaryPositionId
+              })));
+            }
+
+            return employee;
           };
 
           return (

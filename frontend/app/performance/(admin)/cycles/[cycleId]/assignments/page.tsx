@@ -131,10 +131,13 @@ export default function CycleAssignmentsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                   {filtered.map((a) => {
-                    const employeeName =
-                      typeof a.employeeProfileId === 'object' && a.employeeProfileId && 'firstName' in a.employeeProfileId
-                        ? `${(a.employeeProfileId as any).firstName} ${(a.employeeProfileId as any).lastName}`
-                        : 'Employee';
+                    // Extract employee data from populated employeeProfileId
+                    const employee = typeof a.employeeProfileId === 'object' && a.employeeProfileId ? (a.employeeProfileId as any) : null;
+                    const employeeName = employee
+                      ? `${employee.firstName || ''} ${employee.lastName || ''}`.trim()
+                      : 'Unknown Employee';
+                    const employeeNumber = employee?.employeeNumber || '—';
+                    const positionTitle = employee?.primaryPositionId?.title || '—';
 
                     return (
                       <tr key={a._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40">
@@ -145,7 +148,7 @@ export default function CycleAssignmentsPage() {
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">{employeeName}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-300">ID: {(a as any).employeeId || '—'}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-300">{employeeNumber} • {positionTitle}</div>
                             </div>
                           </div>
                         </td>

@@ -187,11 +187,18 @@ export class PerformanceService {
                 cycleId,
                 templateId: { $ne: '<templateId>' } // Exclude placeholder values
             })
-            .populate('employeeProfileId', 'firstName lastName position')
-            .populate('managerProfileId', 'firstName lastName')
+            .populate('employeeProfileId', 'firstName lastName employeeNumber primaryPositionId')
+            .populate('managerProfileId', 'firstName lastName employeeNumber')
             .populate('templateId', 'name templateType')
             .populate('departmentId', 'name')
             .exec();
+
+        // Manually populate nested primaryPositionId for employees
+        for (const assignment of assignments) {
+            if (assignment.employeeProfileId && (assignment.employeeProfileId as any).primaryPositionId) {
+                await (assignment.employeeProfileId as any).populate('primaryPositionId');
+            }
+        }
 
         return assignments;
     }
@@ -274,17 +281,22 @@ export class PerformanceService {
                     console.log("👔 Manager found:", manager._id);
                     console.log("👔 Manager primaryPositionId:", manager.primaryPositionId);
                 } else {
-                    console.error("❌ Manager not found — check supervisorPositionId mapping");
-                    console.warn("⚠️ No manager found for supervisorPositionId:", emp.supervisorPositionId);
+                    console.warn("⚠️ WARNING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
+                    console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                    console.warn("   This position may be vacant or the employee may not be ACTIVE");
                 }
             } else {
-                console.warn("⚠️ Employee has no supervisorPositionId set");
-                console.warn("❌ DATA ISSUE: employee has no supervisorPositionId — check org structure");
+                console.warn("⚠️ WARNING: Employee has NO supervisorPositionId set");
+                console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                console.warn("   Department:", emp.primaryDepartmentId);
+                console.warn("   Position:", emp.primaryPositionId);
+                console.warn("   ACTION REQUIRED: Set supervisorPositionId in org structure or employee profile");
             }
 
             if (!managerProfileId) {
-                console.warn("⚠️ Skipping employee - no manager found");
-                console.warn("❌ DATA ISSUE: employee has no supervisorPositionId — check org structure");
+                console.warn("⚠️ SKIPPING: Employee", emp.employeeNumber, "- no manager assigned");
+                console.warn("   Employee will NOT receive appraisal assignment for this cycle");
+                console.warn("   Fix: Ensure employee has supervisorPositionId and that position is filled");
                 continue;
             }
 

@@ -98,14 +98,14 @@ export class CreateEmployeeDto {
   @IsString({ each: true })
   permissions?: string[];
 
-  @IsOptional()
+  // REQUIRED: Every employee must have a position and department
   @IsString()
-  primaryPositionId?: string;
+  primaryPositionId: string;
 
-  @IsOptional()
   @IsString()
-  primaryDepartmentId?: string;
+  primaryDepartmentId: string;
 
+  // Auto-resolved from Position.reportsToPositionId, but can be manually set for top-level positions
   @IsOptional()
   @IsString()
   supervisorPositionId?: string;

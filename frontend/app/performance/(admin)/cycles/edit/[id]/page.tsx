@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import axiosInstance from '@/app/utils/ApiClient';
 import { performanceApi } from '@/app/utils/performanceApi';
 import {
   AppraisalCycle,
@@ -122,16 +123,19 @@ export default function EditCyclePage() {
 
   const fetchDepartments = async () => {
     try {
-      // Mock departments for now - you'll need to implement this
-      setDepartments([
-        { _id: 'dept1', name: 'Engineering' },
-        { _id: 'dept2', name: 'Marketing' },
-        { _id: 'dept3', name: 'Sales' },
-        { _id: 'dept4', name: 'HR' },
-        { _id: 'dept5', name: 'Finance' }
-      ]);
+      console.log('🏢 Fetching REAL departments from organization structure...');
+      const response = await axiosInstance.get('/organization-structure/departments');
+      const realDepartments = response.data || [];
+      console.log(`✅ Loaded ${realDepartments.length} real departments:`, realDepartments);
+      setDepartments(realDepartments);
+
+      if (realDepartments.length === 0) {
+        console.warn('⚠️ WARNING: No departments found! Cannot create assignments.');
+      }
     } catch (error) {
-      console.error('Error fetching departments:', error);
+      console.error('❌ Error fetching departments:', error);
+      alert('Failed to load departments. Performance assignments will not work without real department data.');
+      setDepartments([]);
     }
   };
 

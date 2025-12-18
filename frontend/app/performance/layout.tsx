@@ -87,8 +87,8 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -110,22 +110,22 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white/90 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-gray-900">
+      <nav className="bg-gray-800 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden mr-3 text-slate-600 hover:text-slate-900"
+                className="md:hidden mr-3 text-gray-300 hover:text-white"
               >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <Link href="/performance" className="flex items-center space-x-2">
-                <div className="bg-gradient-to-tr from-indigo-600 to-sky-500 p-2 rounded-lg shadow-sm">
+                <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 p-2 rounded-lg shadow-sm">
                   <FileText className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-semibold text-slate-900 hidden sm:inline">
+                <span className="text-xl font-semibold text-white hidden sm:inline">
                   Performance
                 </span>
               </Link>
@@ -134,7 +134,7 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
             <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
               <Link
                 href="/home"
-                className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition"
               >
                 <ArrowLeft size={16} />
                 <span>Back to Home</span>
@@ -146,8 +146,8 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                   href={item.href}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-colors ${
                     isActive(item.href)
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
                   }`}
                 >
                   {item.icon}
@@ -158,17 +158,17 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
 
             <div className="flex items-center space-x-3">
               <div className="hidden md:flex items-center space-x-2 text-sm">
-                <div className="bg-slate-100 p-2 rounded-full">
-                  <UserIcon size={16} className="text-slate-600" />
+                <div className="bg-gray-700 p-2 rounded-full">
+                  <UserIcon size={16} className="text-gray-300" />
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-slate-900">{userName}</p>
-                  <p className="text-slate-500 text-xs">{userRoleLabel}</p>
+                  <p className="font-medium text-white">{userName}</p>
+                  <p className="text-gray-400 text-xs">{userRoleLabel}</p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-slate-600 hover:text-rose-600 text-sm font-medium px-2 py-1 rounded-full hover:bg-rose-50 transition"
+                className="flex items-center space-x-2 text-gray-300 hover:text-red-400 text-sm font-medium px-2 py-1 rounded-full hover:bg-gray-700 transition"
               >
                 <LogOut size={16} />
                 <span className="hidden md:inline">Logout</span>
@@ -177,12 +177,12 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-slate-200 py-3">
+            <div className="md:hidden border-t border-gray-700 py-3">
               <div className="flex flex-col space-y-2">
                 <Link
                   href="/home"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700"
                 >
                   <ArrowLeft size={16} />
                   <span>Back to Home</span>
@@ -195,8 +195,8 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm ${
                       isActive(item.href)
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-600 hover:bg-slate-100"
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-300 hover:bg-gray-700"
                     }`}
                   >
                     {item.icon}
@@ -204,14 +204,14 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                   </Link>
                 ))}
 
-                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 mt-2">
+                <div className="flex items-center justify-between px-3 py-2 border-t border-gray-700 mt-2">
                   <div className="flex items-center space-x-2">
-                    <div className="bg-slate-100 p-2 rounded-full">
-                      <UserIcon size={16} className="text-slate-600" />
+                    <div className="bg-gray-700 p-2 rounded-full">
+                      <UserIcon size={16} className="text-gray-300" />
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900">{userName}</p>
-                      <p className="text-slate-500 text-xs">{userRoleLabel}</p>
+                      <p className="font-medium text-white">{userName}</p>
+                      <p className="text-gray-400 text-xs">{userRoleLabel}</p>
                     </div>
                   </div>
                 </div>

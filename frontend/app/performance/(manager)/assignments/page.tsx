@@ -288,20 +288,26 @@ export default function ManagerAssignmentsPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                              {typeof assignment.employeeProfileId === 'object' &&
-                              assignment.employeeProfileId &&
-                              'firstName' in assignment.employeeProfileId
-                                ? `${(assignment.employeeProfileId as any).firstName} ${(assignment.employeeProfileId as any).lastName}`
-                                : 'Team Member'}
-                            </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-300">
-                              {typeof assignment.employeeProfileId === 'object' &&
-                              assignment.employeeProfileId &&
-                              'position' in assignment.employeeProfileId
-                                ? (assignment.employeeProfileId as any).position
-                                : 'Position'}
-                            </p>
+                            {(() => {
+                              // Extract employee data from populated employeeProfileId
+                              const employee = typeof assignment.employeeProfileId === 'object' && assignment.employeeProfileId ? (assignment.employeeProfileId as any) : null;
+                              const employeeName = employee
+                                ? `${employee.firstName || ''} ${employee.lastName || ''}`.trim()
+                                : 'Unknown Employee';
+                              const employeeNumber = employee?.employeeNumber || '—';
+                              const positionTitle = employee?.primaryPositionId?.title || 'Position not set';
+
+                              return (
+                                <>
+                                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                                    {employeeName}
+                                  </h3>
+                                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                                    {employeeNumber} • {positionTitle}
+                                  </p>
+                                </>
+                              );
+                            })()}
                           </div>
 
                           <div className="flex items-center space-x-2">

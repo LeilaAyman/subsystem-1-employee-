@@ -13,34 +13,35 @@ export default function CreateDepartmentPage() {
     name: "",
     code: "",
     status: "Active",
-    employeeNumber: "", // 👈 Head Department (metaphorical)
+    headPositionId: "", // 👈 Head Position (position-based)
   });
 
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // ===============================
-  // FETCH EMPLOYEES (employeeNumbers)
+  // FETCH POSITIONS
   // ===============================
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchPositions = async () => {
       try {
         const res = await fetch(
-          "http://localhost:4000/employee-profile",
+          "http://localhost:4000/organization-structure/positions",
           { credentials: "include" }
         );
 
-        if (!res.ok) throw new Error("Failed to load employees");
+        if (!res.ok) throw new Error("Failed to load positions");
 
         const data = await res.json();
-        setEmployees(data);
+        console.log("📋 Loaded positions for department head selection:", data);
+        setPositions(data);
       } catch (err) {
-        console.error(err);
+        console.error("❌ Error loading positions:", err);
       }
     };
 
-    fetchEmployees();
+    fetchPositions();
   }, []);
 
   // ===============================
@@ -61,7 +62,7 @@ export default function CreateDepartmentPage() {
           body: JSON.stringify({
             name: form.name,
             code: form.code,
-            employeeNumber: form.employeeNumber || undefined,
+            headPositionId: form.headPositionId || undefined,
             isActive: form.status === "Active",
           }),
         }
@@ -140,25 +141,28 @@ export default function CreateDepartmentPage() {
               />
             </div>
 
-            {/* Head Department (Employee Number) */}
+            {/* Head Position */}
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Head Department
+                Head Position
               </label>
               <select
-                value={form.employeeNumber}
+                value={form.headPositionId}
                 onChange={(e) =>
-                  setForm({ ...form, employeeNumber: e.target.value })
+                  setForm({ ...form, headPositionId: e.target.value })
                 }
                 className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
               >
-                <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp.employeeNumber}>
-                    {emp.employeeNumber}
+                <option value="">-- No Head Position --</option>
+                {positions.map((pos) => (
+                  <option key={pos._id} value={pos._id}>
+                    {pos.title} ({pos.code})
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Select which position is the head of this department
+              </p>
             </div>
 
             {/* Status */}

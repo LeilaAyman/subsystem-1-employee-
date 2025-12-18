@@ -52,7 +52,7 @@ export default function EditDepartmentPage() {
           headPositionId: headPosId,
         });
 
-        // Fetch all positions to filter by this department
+        // Fetch all positions
         const posRes = await fetch(
           `http://localhost:4000/organization-structure/positions`,
           { credentials: "include" }
@@ -60,17 +60,11 @@ export default function EditDepartmentPage() {
 
         if (posRes.ok) {
           const allPositions = await posRes.json();
-          console.log("📋 All positions:", allPositions);
+          console.log("📋 All positions loaded:", allPositions);
 
-          // Filter positions that belong to this department
-          const deptPositions = allPositions.filter(
-            (pos: any) => {
-              const deptId = pos.departmentId?._id || pos.departmentId;
-              return deptId === id || deptId?.toString() === id;
-            }
-          );
-          console.log("🏢 Department positions:", deptPositions);
-          setPositions(deptPositions);
+          // Show ALL positions, not just department positions
+          // This allows flexibility in assigning any position as department head
+          setPositions(allPositions);
         }
       } catch (err: any) {
         setError(err.message);
@@ -213,7 +207,7 @@ export default function EditDepartmentPage() {
                 ))}
               </select>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Select which position is the head of this department. Only positions in this department are shown.
+                Select which position is the head of this department
               </p>
             </div>
 

@@ -11,17 +11,11 @@ export class CreateDepartmentDto {
   @IsString()
   description?: string;
 
-  // 👇 from dropdown (employeeNumber)
-  @IsOptional()
-  @IsString()
-  employeeNumber?: string;
-
-  // 👇 backend-only (resolved from employeeNumber)
+  // Department head must ALWAYS be a position, not an employee
   @IsOptional()
   @IsMongoId()
   headPositionId?: string;
 
-  // 👇 THIS fixes the error
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

@@ -78,36 +78,27 @@ async createDepartment(dto: CreateDepartmentDto) {
   console.log('📁 Creating department');
   console.log('🧩 Create params:', dto);
 
-  let headPositionId: Types.ObjectId | undefined = undefined;
-
-  // ⚠️ employeeNumber is for convenience only — converts to headPositionId
-  if (dto.employeeNumber) {
-    console.log('🔍 Resolving department head from employeeNumber:', dto.employeeNumber);
-    const employee = await this.employeeProfileModel.findOne({
-      employeeNumber: dto.employeeNumber,
-      status: 'ACTIVE',
-    });
-
-    if (!employee || !employee.primaryPositionId) {
-      console.error('❌ ERROR: Invalid department head — employee not found or has no position');
-      throw new BadRequestException('Invalid department head');
+  // Validate headPositionId if provided
+  if (dto.headPositionId) {
+    if (!Types.ObjectId.isValid(dto.headPositionId)) {
+      console.error('❌ INVALID headPositionId — must be a valid Position ObjectId');
+      throw new BadRequestException('headPositionId must be a valid Position ObjectId');
     }
 
-    headPositionId = employee.primaryPositionId;
-    console.log('✅ Resolved headPositionId:', headPositionId);
-  }
-
-  // Direct headPositionId takes precedence
-  if (dto.headPositionId) {
-    console.log('📌 Using direct headPositionId:', dto.headPositionId);
-    headPositionId = new Types.ObjectId(dto.headPositionId);
+    // Verify the position exists
+    const position = await this.positionModel.findById(dto.headPositionId);
+    if (!position) {
+      console.error('❌ ERROR: Position not found');
+      throw new BadRequestException('Position not found');
+    }
+    console.log('✅ Head position validated:', position.title);
   }
 
   const department = await this.departmentModel.create({
     code: dto.code,
     name: dto.name,
     description: dto.description,
-    headPositionId,
+    headPositionId: dto.headPositionId ? new Types.ObjectId(dto.headPositionId) : undefined,
     isActive: dto.isActive ?? true,
   });
 
@@ -574,11 +565,43 @@ async activatePosition(id: string) {
       console.log("📦 Sample result:", positions[0]);
     }
 
-    console.log("🔗 Mapping employees to positions");
+    console.log("🔗 Fetching employees with populated primaryPositionId");
+
+    // Fetch ALL employees who have a primaryPositionId (regardless of status)
+    // This ensures we show employees in positions, even if they're on leave, probation, etc.
+    const employees = await this.employeeProfileModel
+      .find({
+        primaryPositionId: { $exists: true, $ne: null }
+      })
+      .select('_id firstName lastName employeeNumber primaryPositionId')
+      .populate('primaryPositionId')
+      .exec();
+
+    console.log("👥 Total employees with positions found:", employees.length);
+
+    // Transform to plain objects with populated position data
+    const populatedEmployees = employees.map(emp => ({
+      _id: emp._id,
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      employeeNumber: emp.employeeNumber,
+      primaryPositionId: emp.primaryPositionId,
+    }));
+
+    if (populatedEmployees.length > 0) {
+      console.log("📦 Sample employee:", {
+        employeeNumber: populatedEmployees[0].employeeNumber,
+        name: `${populatedEmployees[0].firstName} ${populatedEmployees[0].lastName}`,
+        primaryPositionId: (populatedEmployees[0].primaryPositionId as any)?._id || populatedEmployees[0].primaryPositionId,
+      });
+    } else {
+      console.warn("⚠️ WARNING: No employees with primaryPositionId found!");
+    }
 
     return {
       departments,
       positions,
+      employees: populatedEmployees,
     };
   }
 
