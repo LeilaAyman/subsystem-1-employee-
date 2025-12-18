@@ -279,10 +279,12 @@ export class PerformanceService {
                 }
             } else {
                 console.warn("⚠️ Employee has no supervisorPositionId set");
+                console.warn("❌ DATA ISSUE: employee has no supervisorPositionId — check org structure");
             }
 
             if (!managerProfileId) {
                 console.warn("⚠️ Skipping employee - no manager found");
+                console.warn("❌ DATA ISSUE: employee has no supervisorPositionId — check org structure");
                 continue;
             }
 

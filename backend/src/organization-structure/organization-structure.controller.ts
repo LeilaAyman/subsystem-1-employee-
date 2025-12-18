@@ -145,6 +145,10 @@ activatePosition(@Param('id') id: string) {
   @Get('change-requests/my-requests')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // Managers can view their own requests
   getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests/my-requests");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+    console.log("📋 Fetching change requests submitted by this user");
     return this.organizationStructureService.getMyChangeRequests(user.employeeId);
   }
 
@@ -159,7 +163,7 @@ activatePosition(@Param('id') id: string) {
   }
 
   @Get('change-requests/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD) // System Admin can view all, managers can view their own
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // System Admin can view all, managers can view their own
   getChangeRequestById(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     console.log("➡️ Endpoint called: change-requests/:id");
     console.log("👤 Current user:", user.employeeId);

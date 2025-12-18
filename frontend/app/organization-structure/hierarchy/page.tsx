@@ -27,7 +27,6 @@ export default function OrganizationHierarchyPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [viewMode, setViewMode] = useState<"full" | "my-team">("full");
 
   useEffect(() => {
     if (user) {
@@ -37,12 +36,11 @@ export default function OrganizationHierarchyPage() {
 
   const fetchHierarchy = async () => {
     try {
-      // Check if user is a manager
+      // Check if user is a manager or HR
       const isManagerUser = isManager(user);
 
       if (isManagerUser) {
-        // Manager can choose to see full org or just their team
-        // Fetch full organization
+        // Manager/HR: Fetch full organization structure
         const res = await axiosInstance.get("/organization-structure/hierarchy/organization");
         setDepartments(res.data.departments || []);
         setPositions(res.data.positions || []);
@@ -71,7 +69,6 @@ export default function OrganizationHierarchyPage() {
             setDepartments([res.data.department]);
           }
         }
-        setViewMode("my-team");
       }
     } catch (err) {
       console.error(err);
@@ -79,68 +76,6 @@ export default function OrganizationHierarchyPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // New function to fetch only team members
-  const fetchMyTeam = async () => {
-    try {
-      setLoading(true);
-      const teamRes = await axiosInstance.get("/employee-profile/team");
-      setEmployees(teamRes.data || []);
-      console.log("Fetched team members:", teamRes.data?.length);
-    } catch (err: any) {
-      console.error("Error fetching team:", err);
-      setError("Failed to load team members");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderOrgChart = () => {
-    if (viewMode === "my-team" && employees.length > 0) {
-      return renderMyTeamChart();
-    }
-    return renderFullOrgChart();
-  };
-
-  const renderMyTeamChart = () => {
-    return (
-      <div className="flex flex-col items-center space-y-8">
-        {employees.map((emp) => (
-          <div key={emp._id} className="relative">
-            {/* Employee Card */}
-            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 min-w-[300px] border-2 border-blue-500">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                  <span className="text-white text-xl font-bold">
-                    {emp.firstName?.[0]}{emp.lastName?.[0]}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {emp.firstName} {emp.lastName}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {emp.primaryPositionId?.title || "No Position"}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  {emp.primaryDepartmentId?.name || "No Department"}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">
-                  {emp.employeeNumber}
-                </p>
-              </div>
-            </div>
-
-            {/* Reports To Indicator */}
-            {emp.supervisorPositionId && (
-              <div className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">
-                ↑ Reports to Manager
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
   };
 
   const renderFullOrgChart = () => {
@@ -302,42 +237,10 @@ export default function OrganizationHierarchyPage() {
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {isManagerUser
-              ? "Graphical view of organizational structure and reporting lines (BR 24)"
+              ? "Graphical view of organizational structure and reporting lines (REQ-SANV-01)"
               : "Your position in the organization (BR 41)"
             }
           </p>
-
-          {/* View Mode Toggle for Managers */}
-          {isManagerUser && (
-            <div className="flex gap-4 mt-4">
-              <button
-                onClick={() => {
-                  setViewMode("full");
-                  fetchHierarchy();
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  viewMode === "full"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
-                }`}
-              >
-                Full Organization
-              </button>
-              <button
-                onClick={() => {
-                  setViewMode("my-team");
-                  fetchMyTeam();
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  viewMode === "my-team"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
-                }`}
-              >
-                My Team Only
-              </button>
-            </div>
-          )}
         </div>
 
         {error && (
@@ -349,16 +252,16 @@ export default function OrganizationHierarchyPage() {
         {/* Privacy Note (BR 41) */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-700 dark:text-blue-400">
-            <strong>BR 41:</strong> {isManagerUser
-              ? "As a manager, you can view the full organizational structure or focus on your direct reports."
-              : "As an employee, you can only view your own position and reporting structure for privacy."
+            <strong>REQ-SANV-01:</strong> {isManagerUser
+              ? "As a manager/HR, you can view the full organizational structure showing all departments and positions."
+              : "As an employee, you can only view your own position and reporting structure for privacy (BR 41)."
             }
           </p>
         </div>
 
         {/* Organization Chart */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-          {renderOrgChart()}
+          {renderFullOrgChart()}
         </div>
       </div>
     </div>

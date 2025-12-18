@@ -1,404 +1,215 @@
-// app/performance/team/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { ReactNode, useMemo, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { performanceApi } from "@/app/utils/performanceApi";
 import { useAuth } from "@/app/(system)/context/authContext";
 import {
-  DepartmentAnalytics,
-  AppraisalAssignmentStatus,
-} from "@/app/types/performance";
+  isHRManager,
+  isHREmployee,
+  isLineManager,
+  isEmployee,
+} from "@/app/utils/roleCheck";
 import {
+  Home,
+  FileText,
   Users,
   BarChart,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle,
-  Clock,
   AlertCircle,
-  Search,
-  Download,
-  User,
+  User as UserIcon,
+  Menu,
+  X,
+  ArrowLeft,
 } from "lucide-react";
 
-const STATIC_DEPARTMENT_ID = "692ae2c5b21370af496135d2"; // temp hard-coded dept ID
+type NavItem = { href: string; label: string; icon: ReactNode };
 
-export default function ManagerTeamPage() {
-  const { user } = useAuth(); // kept for future use / debugging if needed
-  const [analytics, setAnalytics] = useState<DepartmentAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<string>("current");
+export default function PerformanceLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    fetchTeamAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeframe]);
-
-  const fetchTeamAnalytics = async () => {
-    try {
-      // TEMP: use static department ID from MongoDB
-      const departmentId = STATIC_DEPARTMENT_ID;
-
-      console.log("Manager user:", user);
-      console.log("Using static departmentId:", departmentId);
-
-      const data = await performanceApi.getDepartmentPerformanceAnalytics(
-        departmentId
-        // you can add cycleId here later if backend supports it
-        // timeframe === "current" ? "current" : undefined
-      );
-      setAnalytics(data);
-    } catch (err) {
-      console.error("Error fetching team analytics:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getPerformanceTrend = () => {
-    if (!analytics || analytics.assignments.length === 0) return "stable";
-
-    const publishedCount = analytics.assignments.filter(
-      (a) => a.status === AppraisalAssignmentStatus.PUBLISHED
-    ).length;
-
-    const completionRate =
-      analytics.totalEmployees > 0
-        ? (publishedCount / analytics.totalEmployees) * 100
-        : 0;
-
-    return completionRate > 75
-      ? "improving"
-      : completionRate > 50
-      ? "stable"
-      : "declining";
-  };
-
-  const getStatusIcon = (status: AppraisalAssignmentStatus) => {
-    switch (status) {
-      case AppraisalAssignmentStatus.PUBLISHED:
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case AppraisalAssignmentStatus.SUBMITTED:
-      case AppraisalAssignmentStatus.IN_PROGRESS:
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case AppraisalAssignmentStatus.NOT_STARTED:
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusText = (status: AppraisalAssignmentStatus) => {
-    switch (status) {
-      case AppraisalAssignmentStatus.PUBLISHED:
-        return "Published";
-      case AppraisalAssignmentStatus.SUBMITTED:
-        return "Submitted";
-      case AppraisalAssignmentStatus.IN_PROGRESS:
-        return "In Progress";
-      case AppraisalAssignmentStatus.NOT_STARTED:
-      default:
-        return status;
-    }
-  };
+  // Redirect if not authenticated
+  if (!loading && !user) {
+    router.push("/auth/login");
+    return null;
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
-  const trend = getPerformanceTrend();
+  const navItems: NavItem[] = useMemo(() => {
+    if (!user) return [];
+
+    const hrManager = isHRManager(user);
+    // IMPORTANT: ensure HR Manager doesn't get the limited HR Employee menu
+    const hrEmployee = isHREmployee(user) && !hrManager;
+    const lineManager = isLineManager(user);
+    const employee = isEmployee(user);
+
+    // HR MANAGER nav (full)
+    if (hrManager) {
+      return [
+        { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { href: "/performance/templates", label: "Templates", icon: <FileText size={20} /> },
+        { href: "/performance/cycles", label: "Cycles", icon: <Users size={20} /> },
+        { href: "/performance/adminDisputes", label: "Disputes", icon: <AlertCircle size={20} /> },
+        { href: "/performance/analytics", label: "Analytics", icon: <BarChart size={20} /> },
+      ];
+    }
+
+    // HR EMPLOYEE nav (ONLY)
+    if (hrEmployee) {
+      return [
+        { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { href: "/performance/cycles", label: "Cycles", icon: <Users size={20} /> },
+        { href: "/performance/analytics", label: "Analytics", icon: <BarChart size={20} /> },
+      ];
+    }
+
+    // Line manager nav
+    if (lineManager) {
+      return [
+        { href: "/performance/managerDashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { href: "/performance/assignments", label: "Evaluations", icon: <FileText size={20} /> },
+        { href: "/performance/team", label: "Team", icon: <Users size={20} /> },
+      ];
+    }
+
+    // Regular employee nav
+    if (employee) {
+      return [
+        { href: "/performance/employeeDashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { href: "/performance/reviews", label: "My Reviews", icon: <FileText size={20} /> },
+        { href: "/performance/employeeDisputes", label: "My Disputes", icon: <AlertCircle size={20} /> },
+      ];
+    }
+
+    return [];
+  }, [user]);
+
+  const isActive = (path: string) => (pathname ? pathname.startsWith(path) : false);
+
+  const userName = user?.email?.split("@")[0] || "User";
+
+  const userRoleLabel =
+    (isHREmployee(user) && "HR") ||
+    (isLineManager(user) && "Manager") ||
+    (isEmployee(user) && "Employee") ||
+    "User";
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Performance</h1>
-          <p className="text-gray-600 mt-1">
-            Overview of your team's performance evaluations and trends
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <select
-            className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-          >
-            <option value="current">Current Cycle</option>
-            <option value="all">All Cycles</option>
-            <option value="last-quarter">Last Quarter</option>
-            <option value="last-year">Last Year</option>
-          </select>
-          <button
-            onClick={fetchTeamAnalytics}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white shadow-sm hover:bg-gray-50 transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Team Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">
-              {analytics?.totalEmployees || 0}
-            </p>
-            <p className="text-sm text-gray-500">Team Members</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
-              {analytics?.completedEvaluations || 0}
-            </p>
-            <p className="text-sm text-gray-500">Completed</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600">
-              {analytics?.pendingEvaluations || 0}
-            </p>
-            <p className="text-sm text-gray-500">Pending</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">
-              {analytics?.completionRate || "0%"}
-            </p>
-            <p className="text-sm text-gray-500">Completion Rate</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <div className="flex items-center justify-center">
-              {trend === "improving" ? (
-                <TrendingUp className="h-6 w-6 text-green-500" />
-              ) : trend === "declining" ? (
-                <TrendingDown className="h-6 w-6 text-red-500" />
-              ) : (
-                <BarChart className="h-6 w-6 text-blue-500" />
-              )}
-            </div>
-            <p className="text-sm text-gray-500 mt-2">
-              {trend === "improving"
-                ? "Improving"
-                : trend === "declining"
-                ? "Needs Attention"
-                : "Stable"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Team Members */}
-      <div className="bg-white border rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Team Members
-          </h2>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search team members..."
-                className="pl-10 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <Link href="/performance/assignments">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-blue-700 transition-colors">
-                Manage Evaluations
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-white/90 backdrop-blur border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden mr-3 text-slate-600 hover:text-slate-900"
+              >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="p-6">
-          {analytics?.assignments?.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No team members found</p>
+              <Link href="/performance" className="flex items-center space-x-2">
+                <div className="bg-gradient-to-tr from-indigo-600 to-sky-500 p-2 rounded-lg shadow-sm">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-xl font-semibold text-slate-900 hidden sm:inline">
+                  Performance
+                </span>
+              </Link>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Team Member
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Assigned
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Completed
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {analytics?.assignments?.map((assignment) => (
-                    <tr key={assignment.employeeId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-500" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {assignment.employeeName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Employee ID: {assignment.employeeId}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {getStatusIcon(assignment.status)}
-                          <span className="ml-2 text-sm text-gray-900">
-                            {getStatusText(assignment.status)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {assignment.assignedAt
-                          ? new Date(assignment.assignedAt).toLocaleDateString()
-                          : "—"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {assignment.completedAt
-                          ? new Date(
-                              assignment.completedAt
-                            ).toLocaleDateString()
-                          : "Not completed"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {assignment.status ===
-                          AppraisalAssignmentStatus.NOT_STARTED && (
-                          <Link
-                            href={`/performance/assignments/evaluate/${assignment.employeeId}`}
-                          >
-                            <button className="text-blue-600 hover:text-blue-900">
-                              Start Evaluation
-                            </button>
-                          </Link>
-                        )}
-                        {assignment.status ===
-                          AppraisalAssignmentStatus.IN_PROGRESS && (
-                          <Link
-                            href={`/performance/assignments/evaluate/${assignment.employeeId}`}
-                          >
-                            <button className="text-blue-600 hover:text-blue-900">
-                              Continue Evaluation
-                            </button>
-                          </Link>
-                        )}
-                        {assignment.status ===
-                          AppraisalAssignmentStatus.PUBLISHED && (
-                          <Link
-                            href={`/performance/assignments/view/${assignment.employeeId}`}
-                          >
-                            <button className="text-green-600 hover:text-green-900">
-                              View Results
-                            </button>
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+              <Link
+                href="/home"
+                className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+              >
+                <ArrowLeft size={16} />
+                <span>Back to Home</span>
+              </Link>
+
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-2 text-sm">
+                <div className="bg-slate-100 p-2 rounded-full">
+                  <UserIcon size={16} className="text-slate-600" />
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-slate-900">{userName}</p>
+                  <p className="text-slate-500 text-xs">{userRoleLabel}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-slate-200 py-3">
+              <div className="flex flex-col space-y-2">
+                <Link
+                  href="/home"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Back to Home</span>
+                </Link>
+
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm ${
+                      isActive(item.href)
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+
+                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-slate-100 p-2 rounded-full">
+                      <UserIcon size={16} className="text-slate-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">{userName}</p>
+                      <p className="text-slate-500 text-xs">{userRoleLabel}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      </div>
+      </nav>
 
-      {/* Performance Insights & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h3 className="font-medium text-gray-900 mb-4">
-            Performance Insights
-          </h3>
-          <div className="space-y-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Average Completion Time</span>
-              <span className="font-medium text-gray-900">14 days</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">On-time Submissions</span>
-              <span className="font-medium text-green-600">85%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Overdue Evaluations</span>
-              <span className="font-medium text-red-600">
-                {analytics?.assignments?.filter((a) => {
-                  if (!a.completedAt && a.assignedAt) {
-                    const assignedDate = new Date(a.assignedAt);
-                    const daysSince = Math.floor(
-                      (Date.now() - assignedDate.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    );
-                    return daysSince > 30;
-                  }
-                  return false;
-                }).length || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Average Score</span>
-              <span className="font-medium text-gray-900">
-                {analytics?.averageScore || "N/A"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h3 className="font-medium text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <Link href="/performance/assignments">
-              <button className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-3">
-                  <BarChart className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="font-medium">View All Evaluations</p>
-                    <p className="text-sm text-gray-500">
-                      Complete evaluation list
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </Link>
-
-            <button className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-between transition-colors">
-              <div className="flex items-center gap-3">
-                <Download className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="font-medium">Export Team Report</p>
-                  <p className="text-sm text-gray-500">
-                    Download performance data
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
     </div>
   );
 }
