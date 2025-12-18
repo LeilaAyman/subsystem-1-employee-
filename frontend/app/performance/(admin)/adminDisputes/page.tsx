@@ -379,41 +379,30 @@ export default function AdminDisputesPage() {
 
                 {/* Right Section - Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/performance/disputes/${dispute._id}`}>
-                    <button className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2">
-                      <Eye size={14} />
-                      View Details
-                    </button>
-                  </Link>
+                <Link href={`/performance/adminDisputes/${dispute._id}`}>
+                  <button className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2">
+                    <Eye size={14} />
+                    View Details
+                  </button>
+                </Link>
 
-                  {(dispute.status === AppraisalDisputeStatus.OPEN ||
-                    dispute.status === AppraisalDisputeStatus.UNDER_REVIEW) && (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          const summary = prompt('Enter resolution summary:');
-                          if (summary) {
-                            handleResolveDispute(dispute._id, 'adjusted', summary);
-                          }
-                        }}
-                        className="px-3 py-2 bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600"
-                      >
+                {(dispute.status === AppraisalDisputeStatus.OPEN ||
+                  dispute.status === AppraisalDisputeStatus.UNDER_REVIEW) && (
+                  <div className="flex space-x-2">
+                    <Link href={`/performance/adminDisputes/${dispute._id}/approve`}>
+                      <button className="px-3 py-2 bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600">
                         Approve
                       </button>
-                      <button
-                        onClick={() => {
-                          const summary = prompt('Enter rejection reason:');
-                          if (summary) {
-                            handleResolveDispute(dispute._id, 'rejected', summary);
-                          }
-                        }}
-                        className="px-3 py-2 bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600"
-                      >
+                    </Link>
+
+                    <Link href={`/performance/adminDisputes/${dispute._id}/reject`}>
+                      <button className="px-3 py-2 bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600">
                         Reject
                       </button>
-                    </div>
-                  )}
-                </div>
+                    </Link>
+                  </div>
+                )}
+              </div>
               </div>
             </div>
           ))}

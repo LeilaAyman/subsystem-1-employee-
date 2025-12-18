@@ -19,7 +19,6 @@ import {
   User as UserIcon,
   Menu,
   X,
-  LogOut,
   ArrowLeft,
 } from "lucide-react";
 
@@ -28,7 +27,7 @@ type NavItem = { href: string; label: string; icon: ReactNode };
 export default function PerformanceLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Redirect if not authenticated
@@ -49,11 +48,12 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     if (!user) return [];
 
     const hrManager = isHRManager(user);
-    const hrEmployee = isHREmployee(user); // includes HR Manager by design
+    // IMPORTANT: ensure HR Manager doesn't get the limited HR Employee menu
+    const hrEmployee = isHREmployee(user) && !hrManager;
     const lineManager = isLineManager(user);
     const employee = isEmployee(user);
 
-    // HR nav (HR Employee/Manager)
+    // HR MANAGER nav (full)
     if (hrManager) {
       return [
         { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
@@ -64,6 +64,7 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
       ];
     }
 
+    // HR EMPLOYEE nav (ONLY)
     if (hrEmployee) {
       return [
         { href: "/performance/adminDashboard", label: "Dashboard", icon: <Home size={20} /> },
@@ -75,6 +76,7 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     // Line manager nav
     if (lineManager) {
       return [
+        { href: "/performance/managerDashboard", label: "Dashboard", icon: <Home size={20} /> },
         { href: "/performance/assignments", label: "Evaluations", icon: <FileText size={20} /> },
         { href: "/performance/team", label: "Team", icon: <Users size={20} /> },
       ];
@@ -96,17 +98,11 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
 
   const userName = user?.email?.split("@")[0] || "User";
 
-  // Safer label than user.roles[0] since your role structure varies
   const userRoleLabel =
     (isHREmployee(user) && "HR") ||
     (isLineManager(user) && "Manager") ||
     (isEmployee(user) && "Employee") ||
     "User";
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/auth/login");
-  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -165,13 +161,6 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                   <p className="text-slate-500 text-xs">{userRoleLabel}</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-slate-600 hover:text-rose-600 text-sm font-medium px-2 py-1 rounded-full hover:bg-rose-50 transition"
-              >
-                <LogOut size={16} />
-                <span className="hidden md:inline">Logout</span>
-              </button>
             </div>
           </div>
 

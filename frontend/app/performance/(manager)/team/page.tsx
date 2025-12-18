@@ -1,7 +1,7 @@
 // app/performance/team/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { performanceApi } from "@/app/utils/performanceApi";
 import { useAuth } from "@/app/(system)/context/authContext";
@@ -22,35 +22,76 @@ import {
   User,
 } from "lucide-react";
 
-const STATIC_DEPARTMENT_ID = "692ae2c5b21370af496135d2"; // temp hard-coded dept ID
-
 export default function ManagerTeamPage() {
-  const { user } = useAuth(); // kept for future use / debugging if needed
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<DepartmentAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<string>("current");
+  const [error, setError] = useState<string | null>(null);
+
+  // Try hard to extract the departmentId from whatever shape your user object has
+  const departmentId = useMemo(() => {
+    if (!user) return null;
+
+    const candidates: any[] = [
+      (user as any).departmentId,
+      (user as any).department?._id,
+      (user as any).department?._id?.toString?.(),
+      (user as any).department?._id?._id,
+      (user as any).departmentProfileId,
+      (user as any).employeeProfile?.departmentId,
+      (user as any).profile?.departmentId,
+      (user as any).employeeProfileId?.departmentId,
+      (user as any).employeeProfileId?.department?._id,
+      (user as any).department?._id,
+      (user as any).deptId,
+    ];
+
+    const picked = candidates.find(
+      (v) => typeof v === "string" && v.trim().length > 0
+    );
+
+    return picked ?? null;
+  }, [user]);
 
   useEffect(() => {
+    // only fetch after auth resolves
+    if (!user) return;
     fetchTeamAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeframe]);
+  }, [user, timeframe, departmentId]);
 
   const fetchTeamAnalytics = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      // TEMP: use static department ID from MongoDB
-      const departmentId = STATIC_DEPARTMENT_ID;
+      if (!departmentId) {
+        setAnalytics(null);
+        setError(
+          "No departmentId found on the logged-in user. Add departmentId to the user payload (or map it in authContext)."
+        );
+        return;
+      }
 
       console.log("Manager user:", user);
-      console.log("Using static departmentId:", departmentId);
+      console.log("Resolved departmentId:", departmentId);
 
+      // If your backend supports timeframe/cycle filtering later, pass it as cycleId.
       const data = await performanceApi.getDepartmentPerformanceAnalytics(
         departmentId
-        // you can add cycleId here later if backend supports it
         // timeframe === "current" ? "current" : undefined
       );
+
       setAnalytics(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching team analytics:", err);
+      setAnalytics(null);
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to fetch team analytics"
+      );
     } finally {
       setLoading(false);
     }
@@ -121,7 +162,13 @@ export default function ManagerTeamPage() {
           <p className="text-gray-600 mt-1">
             Overview of your team's performance evaluations and trends
           </p>
+          {!!departmentId && (
+            <p className="text-xs text-gray-400 mt-1">
+              Department ID: {departmentId}
+            </p>
+          )}
         </div>
+
         <div className="flex space-x-3">
           <select
             className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -133,6 +180,7 @@ export default function ManagerTeamPage() {
             <option value="last-quarter">Last Quarter</option>
             <option value="last-year">Last Year</option>
           </select>
+
           <button
             onClick={fetchTeamAnalytics}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white shadow-sm hover:bg-gray-50 transition-colors"
@@ -141,6 +189,14 @@ export default function ManagerTeamPage() {
           </button>
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="bg-white border border-red-200 rounded-lg p-4 shadow-sm">
+          <p className="text-sm font-medium text-red-700">Couldn’t load team</p>
+          <p className="text-sm text-red-600 mt-1">{error}</p>
+        </div>
+      )}
 
       {/* Team Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -201,9 +257,8 @@ export default function ManagerTeamPage() {
       {/* Team Members */}
       <div className="bg-white border rounded-lg shadow-sm">
         <div className="px-6 py-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Team Members
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
+
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -213,6 +268,7 @@ export default function ManagerTeamPage() {
                 className="pl-10 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
             <Link href="/performance/assignments">
               <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-blue-700 transition-colors">
                 Manage Evaluations
@@ -222,7 +278,7 @@ export default function ManagerTeamPage() {
         </div>
 
         <div className="p-6">
-          {analytics?.assignments?.length === 0 ? (
+          {(!analytics || analytics.assignments?.length === 0) && !error ? (
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No team members found</p>
@@ -249,6 +305,7 @@ export default function ManagerTeamPage() {
                     </th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {analytics?.assignments?.map((assignment) => (
                     <tr key={assignment.employeeId} className="hover:bg-gray-50">
@@ -267,6 +324,7 @@ export default function ManagerTeamPage() {
                           </div>
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           {getStatusIcon(assignment.status)}
@@ -275,11 +333,13 @@ export default function ManagerTeamPage() {
                           </span>
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {assignment.assignedAt
                           ? new Date(assignment.assignedAt).toLocaleDateString()
                           : "—"}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {assignment.completedAt
                           ? new Date(
@@ -287,6 +347,7 @@ export default function ManagerTeamPage() {
                             ).toLocaleDateString()
                           : "Not completed"}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         {assignment.status ===
                           AppraisalAssignmentStatus.NOT_STARTED && (
@@ -298,6 +359,7 @@ export default function ManagerTeamPage() {
                             </button>
                           </Link>
                         )}
+
                         {assignment.status ===
                           AppraisalAssignmentStatus.IN_PROGRESS && (
                           <Link
@@ -308,6 +370,7 @@ export default function ManagerTeamPage() {
                             </button>
                           </Link>
                         )}
+
                         {assignment.status ===
                           AppraisalAssignmentStatus.PUBLISHED && (
                           <Link
@@ -334,15 +397,18 @@ export default function ManagerTeamPage() {
           <h3 className="font-medium text-gray-900 mb-4">
             Performance Insights
           </h3>
+
           <div className="space-y-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Average Completion Time</span>
               <span className="font-medium text-gray-900">14 days</span>
             </div>
+
             <div className="flex items-center justify-between">
               <span className="text-gray-600">On-time Submissions</span>
               <span className="font-medium text-green-600">85%</span>
             </div>
+
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Overdue Evaluations</span>
               <span className="font-medium text-red-600">
@@ -359,6 +425,7 @@ export default function ManagerTeamPage() {
                 }).length || 0}
               </span>
             </div>
+
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Average Score</span>
               <span className="font-medium text-gray-900">
@@ -370,6 +437,7 @@ export default function ManagerTeamPage() {
 
         <div className="bg-white border rounded-lg p-6 shadow-sm">
           <h3 className="font-medium text-gray-900 mb-4">Quick Actions</h3>
+
           <div className="space-y-3">
             <Link href="/performance/assignments">
               <button className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-between transition-colors">
